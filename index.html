@@ -202,20 +202,20 @@
   .strip{background:var(--panel);border:1px solid #1e2124;border-radius:12px;
     display:grid;grid-template-columns:660px 290px 640px;column-gap:42px;justify-content:center;padding:20px 28px;align-items:center;position:relative;overflow:hidden}
   .strip .led-bg{border-radius:12px}
-  .map-panel{height:294px;position:relative;z-index:2;border:1px solid rgba(242,101,34,.52);border-radius:10px;overflow:hidden;background:#03244d;box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),0 0 18px rgba(3,36,77,.38)}
-  .map-title,.map-readout{position:absolute;z-index:700;top:10px;padding:6px 9px;border:1px solid rgba(255,190,77,.18);border-radius:4px;background:rgba(4,6,7,.88);font-size:10px;letter-spacing:.16em;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.28)}
+  .map-panel{height:294px;position:relative;z-index:2;border:1px solid rgba(67,124,184,.7);border-radius:10px;overflow:hidden;background:#03244d;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 0 18px rgba(3,36,77,.48)}
+  .map-title,.map-readout{position:absolute;z-index:700;top:10px;padding:7px 10px;border:1px solid rgba(255,190,77,.2);border-radius:4px;background:rgba(3,20,42,.92);font-size:11px;letter-spacing:.15em;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.3)}
   .map-title{left:10px;color:var(--amber)}
   .map-readout{right:10px;color:#f6f3e8;letter-spacing:.1em}
   #flight-map{width:100%;height:100%;background:#03244d}
-  #flight-map .map-base-tiles{filter:grayscale(1) sepia(1) saturate(7) hue-rotate(338deg) brightness(2.05) contrast(1.38);opacity:.88!important}
-  #flight-map .map-label-tiles{filter:grayscale(1) brightness(2.35) contrast(1.4);opacity:1!important}
-  #flight-map .leaflet-control-attribution{font-family:var(--mono);font-size:8px;background:rgba(4,6,7,.84);color:#b8b5aa;padding:2px 5px;border-radius:3px 0 0 0}
+  #flight-map .map-base-tiles{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(165deg) brightness(2.15) contrast(1.34);opacity:.92!important}
+  #flight-map .map-label-tiles{filter:grayscale(1) brightness(2.5) contrast(1.42);opacity:1!important}
+  #flight-map .leaflet-control-attribution{font-family:var(--mono);font-size:9px;background:rgba(3,20,42,.9);color:#c8d3df;padding:3px 6px;border-radius:3px 0 0 0}
   #flight-map .leaflet-control-attribution a{color:#ece8dc}
   #flight-map .leaflet-tooltip{box-shadow:none}
   #flight-map .leaflet-tooltip::before{display:none}
-  #flight-map .map-place-label,#flight-map .map-aircraft-label{border:1px solid rgba(242,101,34,.5);border-radius:3px;background:rgba(3,36,77,.9);font-family:var(--mono);font-weight:800;letter-spacing:.08em;text-shadow:0 1px 2px #000,1px 0 2px #000,-1px 0 2px #000;padding:4px 6px}
-  #flight-map .map-place-label{color:#fff;font-size:11px}
-  #flight-map .map-aircraft-label{color:#ff8a3d;font-size:10px}
+  #flight-map .map-place-label,#flight-map .map-aircraft-label{border:1px solid rgba(242,101,34,.58);border-radius:4px;background:rgba(3,36,77,.94);font-family:var(--mono);font-weight:900;letter-spacing:.07em;text-shadow:0 1px 2px #000,1px 0 2px #000,-1px 0 2px #000;padding:5px 8px}
+  #flight-map .map-place-label{color:#fff;font-size:13px}
+  #flight-map .map-aircraft-label{color:#ff9a56;font-size:12px}
   .map-plane-icon{background:transparent;border:0}
   .map-plane-icon::before{content:"";position:absolute;width:44px;height:44px;left:-3px;top:-3px;border:1px solid rgba(255,190,77,.36);border-radius:50%;box-shadow:0 0 12px rgba(255,190,77,.22)}
   .map-plane-icon span{display:block;color:var(--amber);font-family:var(--dot);font-size:38px;line-height:38px;-webkit-text-stroke:1.5px #07090a;text-shadow:0 0 8px rgba(255,190,77,.72);transform-origin:50% 50%}
