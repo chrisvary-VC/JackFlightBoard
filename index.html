@@ -124,17 +124,18 @@
   .idcol .airline{font-family:var(--dot);font-weight:var(--w-black);font-size:62px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .idcol .callsign{font-family:var(--dot);font-weight:var(--w-bold);font-size:40px;color:var(--amber);line-height:1}
   .idcol .type{font-family:var(--dot);font-weight:var(--w-bold);font-size:38px;line-height:1}
-  .route{margin-top:4px;width:100%;max-width:760px}
+  .route{margin-top:24px;transform:translateY(12px);width:100%;max-width:760px}
   .route-card{display:grid;grid-template-columns:minmax(0,1fr) 350px minmax(0,1fr);gap:20px;align-items:center;width:100%}
   .route-stop:last-child{text-align:right}
-  .route-stop .code{font-family:var(--dot);font-weight:var(--w-black);font-size:58px;line-height:.9}
-  .route-stop .city{font-size:14px;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--led-dim)}
-  .route-label{font-size:11px;letter-spacing:.18em;margin-bottom:7px;color:var(--amber)}
-  .route-track{position:relative;height:48px;margin-top:10px}
-  .route-track:before{content:"";position:absolute;left:0;right:0;top:24px;border-top:2px dashed rgba(255,190,77,.7)}
-  .route-track:after{content:"";position:absolute;right:-2px;top:19px;width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber)}
-  .route-plane{position:absolute;z-index:1;left:calc(var(--progress) * 1%);top:2px;transform:translateX(-50%);font-family:var(--dot);font-size:32px;color:var(--amber);line-height:1;text-shadow:0 0 14px rgba(255,190,77,.8)}
-  .route-progress{position:absolute;left:0;top:34px;font-size:10px;letter-spacing:.14em;color:var(--led-dim);white-space:nowrap}
+  .route-stop .code{font-family:var(--dot);font-weight:var(--w-black);font-size:38px;line-height:.9}
+  .route-stop .city{font-size:9px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--led-dim)}
+  .route-label{font-size:7px;letter-spacing:.18em;margin-bottom:5px;color:var(--amber)}
+  .route-track{position:relative;height:58px;margin-top:5px}
+  .route-arc{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .route-arc path{fill:none;stroke:var(--amber);stroke-width:2;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(255,190,77,.5))}
+  .route-arc circle{fill:var(--amber);filter:drop-shadow(0 0 5px rgba(255,190,77,.8))}
+  .route-plane{position:absolute;z-index:1;left:calc(var(--progress) * 1%);top:var(--plane-y);transform:translate(-50%,-50%);font-family:var(--dot);font-size:21px;color:var(--amber);line-height:1;text-shadow:0 0 14px rgba(255,190,77,.8)}
+  .route-progress{position:absolute;left:0;top:51px;font-size:7px;letter-spacing:.14em;color:var(--led-dim);white-space:nowrap}
   .route-pending{font-family:var(--dot);font-weight:var(--w-black);font-size:42px;color:var(--led-dim)}
 
   /* data strip */
@@ -466,6 +467,10 @@ function miniLogo(cs){
 }
 
 /* =============== RENDER =============== */
+function routeArcY(progress){
+  const t=progress/100;
+  return 42-48*t*(1-t);
+}
 function buildHero(f){
   withDelta(f);
   const al=f.airline||airlineFor(f.callsign);
@@ -478,10 +483,11 @@ function buildHero(f){
   const routeProgress=f.orig&&f.dest
     ? Math.min(96,Math.max(4,Math.round(100*distMi(f.orig.lat,f.orig.lon,f.lat,f.lon)/distMi(f.orig.lat,f.orig.lon,f.dest.lat,f.dest.lon))))
     : 0;
+  const routeY=routeArcY(routeProgress);
   const routeHTML=f.orig&&f.dest
     ? `<div class="route-card">
          <div class="route-stop"><div class="route-label k">DEPARTED</div><div class="code glow">${f.orig.code}</div><div class="city k">${f.orig.city||""}</div></div>
-         <div class="route-track" id="route-track" style="--progress:${routeProgress}"><span class="route-plane">✈</span><span class="route-progress k" id="route-progress">APPROX. ${routeProgress}% COMPLETE</span></div>
+         <div class="route-track" id="route-track" style="--progress:${routeProgress};--plane-y:${routeY}px"><svg class="route-arc" viewBox="0 0 350 58" preserveAspectRatio="none" aria-hidden="true"><path d="M 0 42 Q 175 18 350 42"/><circle cx="350" cy="42" r="4"/></svg><span class="route-plane">✈</span><span class="route-progress k" id="route-progress">APPROX. ${routeProgress}% COMPLETE</span></div>
          <div class="route-stop"><div class="route-label k">ARRIVING</div><div class="code glow">${f.dest.code}</div><div class="city k">${f.dest.city||""}</div></div>
        </div>`
     : `<div class="route-pending glow">ROUTE PENDING</div>`;
@@ -573,7 +579,10 @@ function updateRouteProgress(f){
   const progress=Math.min(96,Math.max(4,Math.round(100*distMi(f.orig.lat,f.orig.lon,f.lat,f.lon)/total)));
   const track=document.getElementById("route-track");
   const label=document.getElementById("route-progress");
-  if(track) track.style.setProperty("--progress",progress);
+  if(track){
+    track.style.setProperty("--progress",progress);
+    track.style.setProperty("--plane-y",`${routeArcY(progress)}px`);
+  }
   if(label) label.textContent=`APPROX. ${progress}% COMPLETE`;
 }
 
