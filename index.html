@@ -94,24 +94,26 @@
   @keyframes tigerEyes{0%,100%{opacity:0}18%,68%{opacity:1}42%{opacity:.48}54%{opacity:1}}
 
   /* ---------- header ---------- */
-  .header{height:98px;display:flex;align-items:center;justify-content:space-between;padding:0 38px;flex:0 0 auto}
-  .header h1{font-family:var(--dot);font-weight:var(--w-black);font-size:52px;line-height:1}
+  .header{height:110px;display:grid;grid-template-columns:600px 350px 220px minmax(0,1fr);column-gap:20px;align-items:center;padding:0 38px;flex:0 0 auto}
+  .header > *:not(.led-bg):not(.sheen){min-width:0}
+  .header h1{font-family:var(--dot);font-weight:var(--w-black);font-size:50px;line-height:1;white-space:nowrap}
   .header h1 .ap{color:var(--amber)}
-  .header .sub{font-size:13px;margin-top:6px}
-  .header .mid{display:flex;gap:46px}
+  .header .sub{font-size:11px;margin-top:6px;white-space:nowrap}
+  .header .mid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:350px}
   .chip{display:flex;flex-direction:column;align-items:center;gap:3px}
-  .chip .v{font-family:var(--dot);font-weight:var(--w-black);font-size:44px;line-height:1}
-  .chip .k{font-size:11px}
-  .clockwrap{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
-  #clock{font-family:var(--dot);font-weight:var(--w-black);font-size:54px;line-height:1}
-  .wind-widget{display:flex;flex-direction:column;align-items:center;gap:2px;margin-right:10px}
+  .chip .v{font-family:var(--dot);font-weight:var(--w-black);font-size:38px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .chip .k{font-size:9px;white-space:nowrap}
+  .clockwrap{width:100%;min-width:0;display:grid;grid-template-rows:40px 28px 18px;row-gap:3px;justify-items:end;align-content:center}
+  #clock{font-family:var(--dot);font-weight:var(--w-black);font-size:44px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .wind-widget{width:220px;height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;margin:0;border-left:1px solid rgba(246,243,232,.09);border-right:1px solid rgba(246,243,232,.09)}
   .wind-top{display:flex;align-items:center;gap:12px}
-  .wind-spd{font-family:var(--dot);font-weight:var(--w-black);font-size:38px;line-height:1}
-  .wind-unit{font-family:var(--mono);font-size:14px;color:var(--led-dim);margin-left:3px}
-  .wind-bot{font-family:var(--dot);font-weight:var(--w-bold);font-size:22px;display:flex;gap:8px;align-items:center}
+  .wind-top svg{width:32px;height:32px}
+  .wind-spd{font-family:var(--dot);font-weight:var(--w-black);font-size:34px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .wind-unit{font-family:var(--mono);font-size:12px;color:var(--led-dim);margin-left:3px}
+  .wind-bot{font-family:var(--dot);font-weight:var(--w-bold);font-size:18px;display:flex;gap:7px;align-items:center;white-space:nowrap;font-variant-numeric:tabular-nums}
   .wind-sep{color:var(--led-dim)}
-  .status{display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.2em}
-  .live-controls{display:flex;align-items:center;justify-content:flex-end;gap:14px}
+  .status{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.16em;white-space:nowrap}
+  .live-controls{width:100%;display:flex;align-items:center;justify-content:flex-end;gap:12px}
   .tower-control{display:inline-flex;align-items:center;gap:8px;padding:4px 9px;border:1px solid #34373a;border-radius:6px;background:rgba(13,15,17,.72);color:var(--led-dim);font-family:var(--mono);cursor:pointer;white-space:nowrap;transition:border-color .18s ease,color .18s ease,background .18s ease}
   .tower-control:hover,.tower-control:focus-visible{border-color:var(--amber);background:rgba(255,190,77,.08);color:var(--led);outline:none}
   .tower-control .tower-icon{color:var(--led-dim);font-size:16px;line-height:1}
@@ -124,7 +126,7 @@
   .tower-control[data-state="listening"]{border-color:rgba(121,255,160,.55);color:var(--green);background:rgba(121,255,160,.06)}
   .tower-control[data-state="listening"] .tower-lamp{background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 2s ease-in-out infinite}
   .tower-control[data-state="blocked"]{border-color:rgba(255,190,77,.5);color:var(--amber)}
-  .data-credit{font-size:9px;letter-spacing:.12em;color:var(--led-dim);white-space:nowrap}
+  .data-credit{font-size:8px;line-height:1.15;letter-spacing:.06em;color:var(--led-dim);white-space:nowrap;text-align:right}
   .data-credit a{color:var(--led);font-weight:600;text-decoration:none}
   .data-credit a:hover{color:var(--amber)}
   .lamp{width:13px;height:13px;border-radius:50%;background:var(--green);box-shadow:0 0 14px var(--green);animation:pulse 2s ease-in-out infinite}
@@ -198,7 +200,7 @@
 
   /* data strip */
   .strip{background:var(--panel);border:1px solid #1e2124;border-radius:12px;
-    display:grid;grid-template-columns:390px 350px 1fr;gap:34px;padding:20px 30px;align-items:center;position:relative;overflow:hidden}
+    display:grid;grid-template-columns:400px 320px 740px;column-gap:54px;justify-content:center;padding:20px 32px;align-items:center;position:relative;overflow:hidden}
   .strip .led-bg{border-radius:12px}
   .map-panel{height:272px;position:relative;z-index:2;border:1px solid #292c2f;border-radius:10px;overflow:hidden;background:#090b0c}
   .map-title{position:absolute;z-index:500;left:10px;top:9px;padding:5px 8px;border-radius:4px;background:rgba(5,7,8,.78);font-size:9px;letter-spacing:.18em;color:var(--amber);pointer-events:none}
@@ -209,17 +211,17 @@
   .map-plane-icon{background:transparent;border:0}
   .map-plane-icon span{display:block;color:var(--amber);font-family:var(--dot);font-size:30px;line-height:30px;text-shadow:0 0 3px #050708,0 0 12px rgba(255,190,77,.95);transform-origin:50% 50%}
   .map-fallback{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--dot);font-size:18px;color:var(--led-dim);line-height:1.5}
-  .look{display:flex;align-items:center}
+  .look{width:320px;display:flex;align-items:center;justify-content:center}
   .rose{width:200px;height:200px}
   .look .big{display:flex;flex-direction:column;gap:20px}
-  .look .dist{font-family:var(--dot);font-weight:var(--w-black);font-size:112px;line-height:.78;color:var(--amber)}
+  .look .dist{font-family:var(--dot);font-weight:var(--w-black);font-size:108px;line-height:.78;color:var(--amber);white-space:nowrap;font-variant-numeric:tabular-nums}
   .look .dist small{font-size:38px;font-weight:var(--w-bold)}
-  .look .dir{font-family:var(--dot);font-weight:var(--w-black);font-size:56px;line-height:.9}
+  .look .dir{font-family:var(--dot);font-weight:var(--w-black);font-size:54px;line-height:.9;white-space:nowrap;font-variant-numeric:tabular-nums}
   .look .k{font-size:12px;margin-top:8px}
-  .tele{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:20px 56px;align-content:center}
+  .tele{width:740px;justify-self:center;display:grid;grid-template-columns:repeat(2,330px);grid-template-rows:repeat(2,1fr);column-gap:80px;row-gap:26px;align-content:center}
   .tele .cell{display:flex;flex-direction:column;gap:6px}
-  .tele .cell .k{font-size:13px}
-  .tele .v{font-family:var(--dot);font-weight:var(--w-black);font-size:54px;line-height:.85;transition:color .25s}
+  .tele .cell .k{font-size:12px}
+  .tele .v{font-family:var(--dot);font-weight:var(--w-black);font-size:52px;line-height:.85;transition:color .25s;white-space:nowrap;font-variant-numeric:tabular-nums}
   .tele .v.up{color:var(--green)} .tele .v.dn{color:var(--red)}
   .flash{animation:flash .5s ease}
   @keyframes flash{0%{filter:brightness(1.9)}100%{filter:brightness(1)}}
@@ -255,7 +257,7 @@
 
   <div class="board header">
     <div class="led-bg"></div><div class="sheen"></div>
-    <div>
+    <div class="brand">
       <h1 class="glow">JACK'S&nbsp;FLIGHTBOARD</h1>
       <div class="sub k">Auburn, Alabama · 20 mi look-out sweep</div>
     </div>
@@ -289,7 +291,10 @@
           <span class="tower-copy"><strong id="towerStatus">TOWER OFF</strong><small>KAUO · GND/TWR/CTAF</small></span>
         </button>
       </div>
-      <div class="data-credit">ADS-B: <a href="https://airplanes.live/" target="_blank" rel="noopener noreferrer">Airplanes.live</a> · ENRICHMENT: <a href="https://www.flightaware.com/" target="_blank" rel="noopener noreferrer">FlightAware</a> · <a href="https://www.liveatc.net/" target="_blank" rel="noopener noreferrer">Audio provided by and with permission from LiveATC.net</a></div>
+      <div class="data-credit">
+        <div>ADS-B: <a href="https://airplanes.live/" target="_blank" rel="noopener noreferrer">Airplanes.live</a> · ENRICHMENT: <a href="https://www.flightaware.com/" target="_blank" rel="noopener noreferrer">FlightAware</a></div>
+        <div><a href="https://www.liveatc.net/" target="_blank" rel="noopener noreferrer">Audio provided by and with permission from LiveATC.net</a></div>
+      </div>
     </div>
   </div>
 
