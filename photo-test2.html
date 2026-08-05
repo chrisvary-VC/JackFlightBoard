@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head><title>Photo Test 2</title>
+<style>
+body{background:#111;color:#fff;font-family:monospace;padding:20px;font-size:14px}
+img{max-width:380px;max-height:200px;border:2px solid #444;display:block;margin:8px 0}
+.ok{color:#7f7} .fail{color:#f77} .pending{color:#fa0}
+.section{margin:16px 0;padding:14px;background:#1a1a1a;border-radius:8px}
+h3{margin:0 0 8px;font-size:15px}
+</style>
+</head>
+<body>
+<h2>Photo Test 2 — Multiple Sources & Hex Codes</h2>
+
+<div class="section">
+<h3>Test A: Planespotters — well-known hex (AAL, lots of photos)</h3>
+<div id="tA" class="pending">fetching...</div>
+</div>
+
+<div class="section">
+<h3>Test B: airport-data.com thumbnail by reg N822NN</h3>
+<img src="https://www.airport-data.com/images/aircraft/thumbnails/N822NN.jpg"
+  onload="ok('tB')" onerror="fail('tB')">
+<div id="tB" class="pending">loading...</div>
+</div>
+
+<div class="section">
+<h3>Test C: airport-data.com by reg N8710M (Southwest)</h3>
+<img src="https://www.airport-data.com/images/aircraft/thumbnails/N8710M.jpg"
+  onload="ok('tC')" onerror="fail('tC')">
+<div id="tC" class="pending">loading...</div>
+</div>
+
+<div class="section">
+<h3>Test D: Planespotters fetch hex aa6b39 (Delta 757, heavily photographed)</h3>
+<div id="tD" class="pending">fetching...</div>
+</div>
+
+<div class="section">
+<h3>Test E: Planespotters fetch hex a0f0a5 (Southwest 737)</h3>
+<div id="tE" class="pending">fetching...</div>
+</div>
+
+<div class="section">
+<h3>Test F: wsrv.nl proxy test (known public image)</h3>
+<img src="https://wsrv.nl/?url=upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Boeing_737-800%2C_American_Airlines%2C_N822NN.jpg/640px-Boeing_737-800%2C_American_Airlines%2C_N822NN.jpg"
+  onload="ok('tF')" onerror="fail('tF')">
+<div id="tF" class="pending">loading...</div>
+</div>
+
+<div class="section">
+<h3>Test G: Wikipedia direct image (Boeing 737-800)</h3>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Boeing_737-800%2C_American_Airlines%2C_N822NN.jpg/640px-Boeing_737-800%2C_American_Airlines%2C_N822NN.jpg"
+  onload="ok('tG')" onerror="fail('tG')">
+<div id="tG" class="pending">loading...</div>
+</div>
+
+<script>
+function ok(id){ const e=document.getElementById(id); e.className='ok'; e.textContent='✓ WORKS'; }
+function fail(id){ const e=document.getElementById(id); e.className='fail'; e.textContent='✗ FAILED'; }
+
+function testPlane(id, hex){
+  fetch(`https://api.planespotters.net/pub/photos/hex/${hex}`)
+    .then(r=>r.json())
+    .then(d=>{
+      const p=d.photos?.[0];
+      const el=document.getElementById(id);
+      if(!p){ el.className='fail'; el.textContent='✗ No photos for hex '+hex; return; }
+      const rawUrl=(p.thumbnail_large?.src||p.thumbnail?.src||'');
+      el.textContent='✓ Got URL: '+rawUrl.substring(0,60)+'...';
+      el.className='ok';
+      // Try loading via wsrv.nl
+      const stripped=rawUrl.replace(/^https?:\/\//,'');
+      const proxied=`https://wsrv.nl/?url=${encodeURIComponent(stripped)}&w=640`;
+      const img=new Image();
+      img.style.cssText='max-width:380px;max-height:200px;display:block;margin:8px 0;border:2px solid #444';
+      img.onload=()=>{ el.innerHTML+='<br>✓ wsrv.nl proxy LOADED'; el.appendChild(img); }
+      img.onerror=()=>{
+        el.innerHTML+='<br>✗ wsrv proxy failed — trying raw CDN...';
+        const img2=new Image();
+        img2.style.cssText=img.style.cssText;
+        img2.onload=()=>{ el.innerHTML+='<br>✓ Raw CDN LOADED!'; el.appendChild(img2); }
+        img2.onerror=()=>{ el.innerHTML+='<br>✗ Raw CDN also failed'; }
+        img2.src=rawUrl;
+      }
+      img.src=proxied;
+    })
+    .catch(e=>{ 
+      const el=document.getElementById(id); 
+      el.className='fail'; 
+      el.textContent='✗ Fetch error: '+e.message; 
+    });
+}
+
+testPlane('tA', 'a0a0a6'); // AA generic
+testPlane('tD', 'aa6b39'); // Delta 757
+testPlane('tE', 'a0f0a5'); // SW 737
+</script>
+</body>
+</html>
