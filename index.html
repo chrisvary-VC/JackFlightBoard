@@ -124,10 +124,18 @@
   .idcol .airline{font-family:var(--dot);font-weight:var(--w-black);font-size:62px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .idcol .callsign{font-family:var(--dot);font-weight:var(--w-bold);font-size:40px;color:var(--amber);line-height:1}
   .idcol .type{font-family:var(--dot);font-weight:var(--w-bold);font-size:38px;line-height:1}
-  .route{display:flex;align-items:center;gap:24px;margin-top:4px}
-  .route .code{font-family:var(--dot);font-weight:var(--w-black);font-size:88px;line-height:.9}
-  .route .city{font-size:15px;margin-top:6px;max-width:240px}
-  .route .arrow{font-family:var(--dot);font-weight:var(--w-black);font-size:64px;color:var(--amber)}
+  .route{margin-top:4px;width:100%;max-width:760px}
+  .route-card{display:grid;grid-template-columns:minmax(0,1fr) 350px minmax(0,1fr);gap:20px;align-items:center;width:100%}
+  .route-stop:last-child{text-align:right}
+  .route-stop .code{font-family:var(--dot);font-weight:var(--w-black);font-size:58px;line-height:.9}
+  .route-stop .city{font-size:14px;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--led-dim)}
+  .route-label{font-size:11px;letter-spacing:.18em;margin-bottom:7px;color:var(--amber)}
+  .route-track{position:relative;height:48px;margin-top:10px}
+  .route-track:before{content:"";position:absolute;left:0;right:0;top:24px;border-top:2px dashed rgba(255,190,77,.7)}
+  .route-track:after{content:"";position:absolute;right:-2px;top:19px;width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber)}
+  .route-plane{position:absolute;z-index:1;left:calc(var(--progress) * 1%);top:2px;transform:translateX(-50%);font-family:var(--dot);font-size:32px;color:var(--amber);line-height:1;text-shadow:0 0 14px rgba(255,190,77,.8)}
+  .route-progress{position:absolute;left:0;top:34px;font-size:10px;letter-spacing:.14em;color:var(--led-dim);white-space:nowrap}
+  .route-pending{font-family:var(--dot);font-weight:var(--w-black);font-size:42px;color:var(--led-dim)}
 
   /* data strip */
   .strip{background:var(--panel);border:1px solid #1e2124;border-radius:12px;
@@ -274,7 +282,7 @@ const toWind=b=>WINDS[Math.round(b/22.5)%16];
 
 /* =============== STATE =============== */
 let flights=[], current=null, currentIdx=0, demoMode=false, rotateStart=Date.now();
-const photoCache={};
+const photoCache={}, routeCache={};
 
 // Safari versions used by some smart displays do not implement
 // AbortSignal.timeout(). Use a standard AbortController instead so the live
@@ -318,23 +326,24 @@ const DEMO=[
   {hex:"f1a2b3",callsign:"DAL77",reg:"N705TW",type:"B752",lat:32.42,lon:-85.74,altFt:38000,gsMph:560,track:92,vrFpm:0}
 ];
 async function getRoutes(list){
-  try{
-    const res=await timedFetch("https://api.adsb.lol/api/0/routeset",{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({planes:list.map(f=>({callsign:f.callsign,lat:f.lat,lng:f.lon}))})
-    },6000);
-    if(!res.ok) return;
-    const data=await res.json();
-    for(const r of data){
-      const f=list.find(x=>x.callsign===r.callsign);
-      if(f&&r._airports&&r._airports.length>=2){
-        const A=r._airports;
-        f.route=A.map(a=>a.iata||a.icao).join(" – ");
-        f.orig={code:A[0].iata||A[0].icao,city:A[0].location||A[0].name};
-        f.dest={code:A[A.length-1].iata||A[A.length-1].icao,city:A[A.length-1].location||A[A.length-1].name};
-      }
+  const load=async f=>{
+    const callsign=(f.callsign||"").trim().toUpperCase();
+    if(!callsign) return;
+    if(routeCache[callsign]===undefined){
+      try{
+        const res=await timedFetch(`https://api.adsbdb.com/v0/callsign/${encodeURIComponent(callsign)}`,{},6000);
+        if(!res.ok){ routeCache[callsign]=null; return; }
+        const route=(await res.json()).response?.flightroute;
+        routeCache[callsign]=route?.origin&&route?.destination?route:null;
+      }catch(e){ routeCache[callsign]=null; }
     }
-  }catch(e){}
+    const route=routeCache[callsign];
+    if(!route) return;
+    f.route=`${route.origin.iata_code||route.origin.icao_code} – ${route.destination.iata_code||route.destination.icao_code}`;
+    f.orig={code:route.origin.iata_code||route.origin.icao_code,city:route.origin.municipality||route.origin.name,lat:route.origin.latitude,lon:route.origin.longitude};
+    f.dest={code:route.destination.iata_code||route.destination.icao_code,city:route.destination.municipality||route.destination.name,lat:route.destination.latitude,lon:route.destination.longitude};
+  };
+  await Promise.all(list.map(load));
 }
 // Aircraft type silhouettes — embedded as base64 SVG, zero external requests
 // GitHub Pages CSP blocks all cross-origin images, so we self-host these
@@ -436,11 +445,16 @@ function buildHero(f){
               onerror="this.outerHTML='<div class=fallback dot>${al.i}</div>'"></div>`
     : `<div class="logo-tile"><div class="fallback dot glow">✈</div></div>`;
   const typeName=TYPES[f.type]||f.type||"Unknown type";
+  const routeProgress=f.orig&&f.dest
+    ? Math.min(96,Math.max(4,Math.round(100*distMi(f.orig.lat,f.orig.lon,f.lat,f.lon)/distMi(f.orig.lat,f.orig.lon,f.dest.lat,f.dest.lon))))
+    : 0;
   const routeHTML=f.orig&&f.dest
-    ? `<div><div class="code glow">${f.orig.code}</div><div class="city k">${f.orig.city||""}</div></div>
-       <div class="arrow">→</div>
-       <div><div class="code glow">${f.dest.code}</div><div class="city k">${f.dest.city||""}</div></div>`
-    : `<div><div class="code glow" style="font-size:48px;color:var(--led-dim)">ROUTE PENDING</div></div>`;
+    ? `<div class="route-card">
+         <div class="route-stop"><div class="route-label k">DEPARTED</div><div class="code glow">${f.orig.code}</div><div class="city k">${f.orig.city||""}</div></div>
+         <div class="route-track" id="route-track" style="--progress:${routeProgress}"><span class="route-plane">✈</span><span class="route-progress k" id="route-progress">APPROX. ${routeProgress}% COMPLETE</span></div>
+         <div class="route-stop"><div class="route-label k">ARRIVING</div><div class="code glow">${f.dest.code}</div><div class="city k">${f.dest.city||""}</div></div>
+       </div>`
+    : `<div class="route-pending glow">ROUTE PENDING</div>`;
 
   const hero=document.getElementById("hero");
   hero.innerHTML=`
@@ -520,6 +534,17 @@ function buildHero(f){
   });
   updateTele(f);
   renderUpNext();
+}
+
+function updateRouteProgress(f){
+  if(!f.orig||!f.dest) return;
+  const total=distMi(f.orig.lat,f.orig.lon,f.dest.lat,f.dest.lon);
+  if(!total) return;
+  const progress=Math.min(96,Math.max(4,Math.round(100*distMi(f.orig.lat,f.orig.lon,f.lat,f.lon)/total)));
+  const track=document.getElementById("route-track");
+  const label=document.getElementById("route-progress");
+  if(track) track.style.setProperty("--progress",progress);
+  if(label) label.textContent=`APPROX. ${progress}% COMPLETE`;
 }
 
 /* the three upcoming planes in the rotation, small format */
@@ -651,6 +676,7 @@ function tickTelemetry(){
   if(current.gsMph>0){ const d=current.gsMph*(dt/3600); [current.lat,current.lon]=project(current.lat,current.lon,current.track,d); }
   if(current.vrFpm) current.altFt=Math.max(0,(current.altFt||0)+current.vrFpm*(dt/60));
   updateTele(current);
+  updateRouteProgress(current);
   // dead-reckon queued planes so next-up distances are live too
   for(let j=1;j<=3;j++){
     const qf=flights[(currentIdx+j)%flights.length];
