@@ -262,6 +262,7 @@ const TYPES = {
   CL60:"Challenger 600",C25B:"Citation CJ3",C56X:"Citation XLS",MD11:"MD-11F",A306:"Airbus A300-600F"
 };
 const WINDS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+const AUBURN_SKYHAWK_PHOTO="assets/auburn-skyhawk.png";
 
 /* =============== MATH =============== */
 const R_MI=3958.8, d2r=d=>d*Math.PI/180, r2d=r=>r*180/Math.PI;
@@ -336,6 +337,9 @@ async function enrichAircraftDetails(list){
     if(!f.reg&&aircraft.registration) f.reg=aircraft.registration;
     if(!f.type&&aircraft.icao_type) f.type=aircraft.icao_type.toUpperCase();
   }));
+  // Auburn student callsigns are normally Skyhawks. Keep a reported aircraft
+  // type, but make the training-fleet identity useful when it is omitted.
+  list.filter(f=>isAuburnCallsign(f.callsign)&&!f.type).forEach(f=>f.type="C172");
 }
 const DEMO=[
   {hex:"a1b2c3",callsign:"DAL1902",reg:"N512DN",type:"A21N",lat:32.86,lon:-85.66,altFt:33800,gsMph:534,track:248,vrFpm:0},
@@ -391,6 +395,12 @@ async function getPhoto(hex, reg, type, callsign){
   const key=(reg||hex||type||"unknown").toUpperCase();
   if(photoCache[key]!==undefined) return photoCache[key];
 
+  if(isAuburnCallsign(callsign)){
+    const photo={src:AUBURN_SKYHAWK_PHOTO,credit:"Auburn Skyhawk training fleet",exact:false,livery:false,auburn:true};
+    photoCache[key]=photo;
+    return photo;
+  }
+
   // First choice: the exact aircraft registration.
   if(reg){
     try{
@@ -442,9 +452,10 @@ async function getPhoto(hex, reg, type, callsign){
 }
 
 /* =============== HELPERS =============== */
+function isAuburnCallsign(cs){ return /^AUB\d+$/.test((cs||"").trim().toUpperCase()); }
 function airlineFor(cs){
   const callsign=(cs||"").trim().toUpperCase();
-  if(/^AUB\d+$/.test(callsign)) return AIRLINES.AUB;
+  if(isAuburnCallsign(callsign)) return AIRLINES.AUB;
   const m=callsign.match(/^[A-Z]{3}/);
   return m&&AIRLINES[m[0]]?AIRLINES[m[0]]:null;
 }
@@ -550,7 +561,7 @@ function buildHero(f){
     const img=document.createElement("img");
     img.src=p.src;
     img.alt=f.reg?`${typeName}, registration ${f.reg}`:typeName;
-    if(!p.exact){
+    if(!p.exact&&!p.auburn){
       img.style.objectFit="contain";
       img.style.padding="20px";
       img.style.filter="drop-shadow(0 4px 24px rgba(0,0,0,.7))";
@@ -568,10 +579,10 @@ function buildHero(f){
     if(p.link){ credit.href=p.link; credit.target="_blank"; credit.rel="noopener noreferrer"; }
     slot.appendChild(credit);
 
-    if(p.exact||p.livery||p.reference){
+    if(p.exact||p.livery||p.reference||p.auburn){
       const badge=document.createElement("div");
       badge.className="photo-badge";
-      badge.textContent=p.exact?"Exact aircraft":p.livery?"Matching livery":"Reference type";
+      badge.textContent=p.exact?"Exact aircraft":p.livery?"Matching livery":p.auburn?"Auburn training fleet":"Reference type";
       slot.appendChild(badge);
     }
   });
