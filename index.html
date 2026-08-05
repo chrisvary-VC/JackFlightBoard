@@ -103,6 +103,10 @@
   .wind-bot{font-family:var(--dot);font-weight:var(--w-bold);font-size:22px;display:flex;gap:8px;align-items:center}
   .wind-sep{color:var(--led-dim)}
   .status{display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.2em}
+  .live-controls{display:flex;align-items:center;justify-content:flex-end;gap:14px}
+  .tower-link{display:inline-flex;align-items:center;gap:7px;padding:4px 8px;border:1px solid #34373a;border-radius:5px;background:rgba(13,15,17,.72);color:var(--led-dim);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;text-decoration:none;white-space:nowrap;transition:border-color .18s ease,color .18s ease,background .18s ease}
+  .tower-link .tower-icon{color:var(--amber);font-size:14px;line-height:1;text-shadow:0 0 8px rgba(255,190,77,.45)}
+  .tower-link:hover,.tower-link:focus-visible{border-color:var(--amber);background:rgba(255,190,77,.08);color:var(--led);outline:none}
   .data-credit{font-size:9px;letter-spacing:.12em;color:var(--led-dim);white-space:nowrap}
   .data-credit a{color:var(--led);font-weight:600;text-decoration:none}
   .data-credit a:hover{color:var(--amber)}
@@ -262,8 +266,13 @@
     </div>
     <div class="clockwrap">
       <div id="clock" class="glow">--:--:--</div>
-      <div class="status" id="status"><span class="lamp"></span><span id="statusTxt">CONNECTING…</span></div>
-      <div class="data-credit">ADS-B: <a href="https://airplanes.live/" target="_blank" rel="noopener noreferrer">Airplanes.live</a> · ENRICHMENT: <a href="https://www.flightaware.com/" target="_blank" rel="noopener noreferrer">FlightAware</a></div>
+      <div class="live-controls">
+        <div class="status" id="status"><span class="lamp"></span><span id="statusTxt">CONNECTING…</span></div>
+        <a class="tower-link" href="https://www.liveatc.net/search/?icao=KAUO" target="_blank" rel="noopener noreferrer" aria-label="Open the KAUO Auburn tower feed on LiveATC">
+          <span class="tower-icon" aria-hidden="true">⌁</span><span>KAUO TOWER ↗</span>
+        </a>
+      </div>
+      <div class="data-credit">ADS-B: <a href="https://airplanes.live/" target="_blank" rel="noopener noreferrer">Airplanes.live</a> · ENRICHMENT: <a href="https://www.flightaware.com/" target="_blank" rel="noopener noreferrer">FlightAware</a> · ATC: <a href="https://www.liveatc.net/" target="_blank" rel="noopener noreferrer">LiveATC.net</a></div>
     </div>
   </div>
 
