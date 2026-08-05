@@ -186,7 +186,7 @@
     <div class="led-bg"></div><div class="sheen"></div>
     <div>
       <h1 class="glow">JACK'S&nbsp;FLIGHTBOARD</h1>
-      <div class="sub k">Auburn, Alabama · 50 mi sweep</div>
+      <div class="sub k">Auburn, Alabama · 10 mi look-out sweep</div>
     </div>
     <div class="mid">
       <div class="chip"><div class="v glow" id="count">--</div><div class="k">In range</div></div>
@@ -222,7 +222,7 @@
 /* =============== CONFIG =============== */
 const CONFIG = {
   lat: 32.604052, lon: -85.490536,   // Auburn University
-  radiusMiles: 50,
+  radiusMiles: 10,
   refreshMs: 8000,
   rotateMs: 30000,
   tickMs: 1000
@@ -284,7 +284,7 @@ function project(lat,lon,brg,dMi){
 const toWind=b=>WINDS[Math.round(b/22.5)%16];
 
 /* =============== STATE =============== */
-let flights=[], current=null, currentIdx=0, demoMode=false, rotateStart=Date.now();
+let flights=[], current=null, currentIdx=0, demoMode=false, rotateStart=Date.now(), flightAwareCache={};
 const photoCache={}, routeCache={}, aircraftCache={};
 
 // Safari versions used by some smart displays do not implement
@@ -321,6 +321,25 @@ async function fetchFlights(){
       lastReal:Date.now()
     };
   }).filter(f=>f.altFt!==0);
+}
+async function loadFlightAwareCache(){
+  try{
+    const res=await timedFetch(`flightaware-enrichment.json?ts=${Date.now()}`,{},5000);
+    if(res.ok) flightAwareCache=(await res.json()).flights||{};
+  }catch(e){ flightAwareCache={}; }
+}
+function applyFlightAwareEnrichment(list){
+  for(const f of list){
+    const extra=flightAwareCache[(f.callsign||"").trim().toUpperCase()];
+    if(!extra) continue;
+    f.flightAware=extra;
+    if(extra.aircraftType) f.type=extra.aircraftType;
+    if(extra.origin?.lat!=null&&extra.origin?.lon!=null&&extra.destination?.lat!=null&&extra.destination?.lon!=null){
+      f.orig=extra.origin;
+      f.dest=extra.destination;
+      f.route=`${extra.origin.code} – ${extra.destination.code}`;
+    }
+  }
 }
 async function enrichAircraftDetails(list){
   await Promise.all(list.map(async f=>{
@@ -698,6 +717,7 @@ async function tickData(){
   try{ list=await fetchFlights(); demoMode=false; setStatus("LIVE · ADS-B",false); }
   catch(e){ list=JSON.parse(JSON.stringify(DEMO)); list.forEach(f=>f.lastReal=Date.now()); demoMode=true; setStatus("DEMO MODE",true); }
 
+  applyFlightAwareEnrichment(list);
   await enrichAircraftDetails(list);
   list.forEach(withDelta);
   list.sort((a,b)=>a.dist-b.dist);
@@ -756,13 +776,17 @@ function setStatus(t,demo){ document.getElementById("statusTxt").textContent=t; 
 function tickClock(){ document.getElementById("clock").textContent=new Date().toLocaleTimeString("en-US",{hour12:false}); }
 function fitStage(){ document.getElementById("stage").style.transform=`scale(${Math.min(innerWidth/1920,innerHeight/1080)})`; }
 
-fitStage(); addEventListener("resize",fitStage);
-tickClock(); setInterval(tickClock,1000);
-tickWind(); setInterval(tickWind,5*60*1000);  // wind refreshes every 5 min
-tickData(); setInterval(tickData,CONFIG.refreshMs);
-setInterval(tickTelemetry,CONFIG.tickMs);
-setInterval(tickProgress,120);
-setInterval(tickRotate,CONFIG.rotateMs);
+async function startBoard(){
+  await loadFlightAwareCache();
+  fitStage(); addEventListener("resize",fitStage);
+  tickClock(); setInterval(tickClock,1000);
+  tickWind(); setInterval(tickWind,5*60*1000);  // wind refreshes every 5 min
+  tickData(); setInterval(tickData,CONFIG.refreshMs);
+  setInterval(tickTelemetry,CONFIG.tickMs);
+  setInterval(tickProgress,120);
+  setInterval(tickRotate,CONFIG.rotateMs);
+}
+startBoard();
 </script>
 </body>
 </html>
