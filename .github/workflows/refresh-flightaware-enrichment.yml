@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Refresh the 10-mile FlightAware cache
+      - name: Refresh the 20-mile FlightAware cache
         env:
           FLIGHTAWARE_API_KEY: ${{ secrets.FLIGHTAWARE_API_KEY }}
         run: node scripts/update-flightaware-enrichment.mjs

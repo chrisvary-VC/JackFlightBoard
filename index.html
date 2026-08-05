@@ -214,9 +214,9 @@
   .upnext{display:flex;align-items:center;gap:8px}
   .upnext .lbl{width:82px;flex:0 0 82px;font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.22em;color:var(--led-dim);white-space:nowrap}
   .mini{flex:1;height:66px;display:flex;align-items:center;gap:8px;background:#0d0f11;border:1px solid #1e2124;border-radius:9px;padding:7px 9px;min-width:0}
-  .mini .mlogo{width:36px;height:36px;border-radius:6px;background:#20242e;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
-  .mini .mlogo img{width:76%;height:76%;object-fit:contain}
-  .mini .mlogo .fb{font-family:var(--dot);font-weight:800;font-size:18px}
+  .mini .mlogo{width:54px;height:54px;border-radius:7px;background:#20242e;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
+  .mini .mlogo img{width:94%;height:94%;object-fit:contain}
+  .mini .mlogo .fb{font-family:var(--dot);font-weight:800;font-size:25px}
   .mini .mtxt{min-width:0}
   .mini .mcall{font-family:var(--dot);font-weight:800;font-size:18px;line-height:1;color:var(--led);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .mini .mroute{font-family:var(--dot);font-weight:700;font-size:13px;line-height:1;color:var(--amber);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -237,7 +237,7 @@
     <div class="led-bg"></div><div class="sheen"></div>
     <div>
       <h1 class="glow">JACK'S&nbsp;FLIGHTBOARD</h1>
-      <div class="sub k">Auburn, Alabama · 10 mi look-out sweep</div>
+      <div class="sub k">Auburn, Alabama · 20 mi look-out sweep</div>
     </div>
     <div class="mid">
       <div class="chip"><div class="v glow" id="count">--</div><div class="k">In range</div></div>
@@ -274,7 +274,7 @@
 /* =============== CONFIG =============== */
 const CONFIG = {
   lat: 32.604052, lon: -85.490536,   // Auburn University
-  radiusMiles: 10,
+  radiusMiles: 20,
   refreshMs: 8000,
   rotateMs: 10000,
   tickMs: 1000
