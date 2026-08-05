@@ -319,32 +319,16 @@ async function getRoutes(list){
     }
   }catch(e){}
 }
-async function getPhoto(hex, reg, type){
-  const key=hex||reg;
-  if(photoCache[key]!==undefined) return photoCache[key];
-  // 1. Try airframes.io — CORS-friendly, purpose-built for web apps
-  try{
-    const res=await fetch(`https://api.airframes.io/aircraft/${hex}`,
-      {signal:AbortSignal.timeout(6000)});
-    if(res.ok){
-      const d=await res.json();
-      const img=d.image||d.images?.[0];
-      if(img?.url){ photoCache[key]={src:img.url,credit:img.photographer?'© '+img.photographer:'airframes.io'}; return photoCache[key]; }
-    }
-  }catch(e){}
-  // 2. Try Planespotters JSON (works when CORS is allowed, e.g. local / some hosts)
-  try{
-    const res=await fetch(`https://api.planespotters.net/pub/photos/hex/${hex}`,
-      {signal:AbortSignal.timeout(6000)});
-    if(res.ok){
-      const d=await res.json();
-      const p=d.photos?.[0];
-      if(p){ photoCache[key]={src:p.thumbnail_large?.src||p.thumbnail?.src,credit:'© '+p.photographer}; return photoCache[key]; }
-    }
-  }catch(e){}
-  // 3. AvPix open image search as img-tag src (no API key needed)
-  photoCache[key]={src:`https://avpix.com/photo/latest/${hex}`,credit:'avpix.com',imgOnly:true};
-  return photoCache[key];
+function getPhoto(hex, reg, type){
+  // No fetch/CORS needed — just return URLs for <img> tags to try in sequence.
+  // The browser loads these directly; CORS only blocks JS fetch, not img src.
+  return Promise.resolve({
+    // Planespotters embed: returns a real photo for the hex code, works as img src
+    src: `https://api.planespotters.net/pub/photos/hex/${hex}`,
+    // Fallback src tried via onerror chain in the render code
+    src2: `https://www.airport-data.com/images/aircraft/thumbnails/${hex}.jpg`,
+    credit: 'planespotters.net'
+  });
 }
 
 /* =============== HELPERS =============== */
@@ -432,27 +416,39 @@ function buildHero(f){
       <div class="upnext" id="upnext"><span class="lbl">NEXT UP</span></div>
     </div>`;
 
-  getPhoto(f.hex, f.reg, f.type).then(p=>{
+  (()=>{
     const slot=hero.querySelector(`.photo[data-hex="${f.hex}"]`);
     if(!slot) return;
-    if(!p){ slot.innerHTML=`<div class="noimg">${typeName}</div>`; return; }
-    const img=document.createElement('img');
-    img.alt=typeName;
-    img.src=p.src;
-    img.onerror=()=>{
-      // Planespotters direct embed also failed — try Jetphotos open embed
-      const jp=document.createElement('img');
-      jp.alt=typeName; jp.style.cssText='width:100%;height:100%;object-fit:cover';
-      jp.src=`https://www.jetphotos.com/photo/keyword/${encodeURIComponent(f.reg||typeName)}/0`;
-      jp.onerror=()=>{ slot.innerHTML=`<div class="noimg">${typeName}</div>`; };
-      slot.innerHTML=''; slot.appendChild(jp);
-    };
-    slot.innerHTML='';
-    slot.appendChild(img);
-    const cred=document.createElement('div');
-    cred.className='credit'; cred.textContent=p.credit;
-    slot.appendChild(cred);
-  });
+    // Cascade of img-src attempts — no fetch, no CORS issues
+    // Each onerror tries the next source
+    const srcs=[
+      // 1. Planespotters direct photo page for this hex — redirects to image
+      `https://api.planespotters.net/pub/photos/hex/${f.hex}`,
+      // 2. airport-data.com thumbnail by hex
+      `https://www.airport-data.com/images/aircraft/thumbnails/${f.hex}.jpg`,
+      // 3. airport-data.com by registration
+      f.reg ? `https://www.airport-data.com/images/aircraft/thumbnails/${f.reg}.jpg` : null,
+      // 4. planespotters search page image by registration
+      f.reg ? `https://api.planespotters.net/pub/photos/reg/${f.reg}` : null,
+    ].filter(Boolean);
+    let idx=0;
+    function tryNext(){
+      if(idx>=srcs.length){ slot.innerHTML=`<div class="noimg">${typeName}</div>`; return; }
+      const img=new Image();
+      img.alt=typeName;
+      img.style.cssText='width:100%;height:100%;object-fit:cover;filter:contrast(1.05) saturate(1.06)';
+      img.onload=()=>{
+        slot.innerHTML='';
+        slot.appendChild(img);
+        const cred=document.createElement('div');
+        cred.className='credit'; cred.textContent='planespotters.net';
+        slot.appendChild(cred);
+      };
+      img.onerror=()=>{ idx++; tryNext(); };
+      img.src=srcs[idx++];
+    }
+    tryNext();
+  })();
   updateTele(f);
   renderUpNext();
 }
