@@ -104,9 +104,18 @@
   .wind-sep{color:var(--led-dim)}
   .status{display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.2em}
   .live-controls{display:flex;align-items:center;justify-content:flex-end;gap:14px}
-  .tower-link{display:inline-flex;align-items:center;gap:7px;padding:4px 8px;border:1px solid #34373a;border-radius:5px;background:rgba(13,15,17,.72);color:var(--led-dim);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;text-decoration:none;white-space:nowrap;transition:border-color .18s ease,color .18s ease,background .18s ease}
-  .tower-link .tower-icon{color:var(--amber);font-size:14px;line-height:1;text-shadow:0 0 8px rgba(255,190,77,.45)}
-  .tower-link:hover,.tower-link:focus-visible{border-color:var(--amber);background:rgba(255,190,77,.08);color:var(--led);outline:none}
+  .tower-control{display:inline-flex;align-items:center;gap:8px;padding:4px 9px;border:1px solid #34373a;border-radius:6px;background:rgba(13,15,17,.72);color:var(--led-dim);font-family:var(--mono);cursor:pointer;white-space:nowrap;transition:border-color .18s ease,color .18s ease,background .18s ease}
+  .tower-control:hover,.tower-control:focus-visible{border-color:var(--amber);background:rgba(255,190,77,.08);color:var(--led);outline:none}
+  .tower-control .tower-icon{color:var(--led-dim);font-size:16px;line-height:1}
+  .tower-control .tower-lamp{width:9px;height:9px;border-radius:50%;background:#555;box-shadow:none;flex:0 0 auto}
+  .tower-control .tower-copy{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+  .tower-control strong{font-size:10px;letter-spacing:.12em;color:inherit}
+  .tower-control small{font-size:8px;letter-spacing:.1em;color:var(--led-dim);margin-top:3px}
+  .tower-control[data-state="connecting"]{border-color:rgba(255,190,77,.5);color:var(--amber)}
+  .tower-control[data-state="connecting"] .tower-lamp{background:var(--amber);box-shadow:0 0 10px var(--amber);animation:pulse 1s ease-in-out infinite}
+  .tower-control[data-state="listening"]{border-color:rgba(121,255,160,.55);color:var(--green);background:rgba(121,255,160,.06)}
+  .tower-control[data-state="listening"] .tower-lamp{background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 2s ease-in-out infinite}
+  .tower-control[data-state="blocked"]{border-color:rgba(255,190,77,.5);color:var(--amber)}
   .data-credit{font-size:9px;letter-spacing:.12em;color:var(--led-dim);white-space:nowrap}
   .data-credit a{color:var(--led);font-weight:600;text-decoration:none}
   .data-credit a:hover{color:var(--amber)}
@@ -268,11 +277,12 @@
       <div id="clock" class="glow">--:--:--</div>
       <div class="live-controls">
         <div class="status" id="status"><span class="lamp"></span><span id="statusTxt">CONNECTING…</span></div>
-        <a class="tower-link" href="https://www.liveatc.net/search/?icao=KAUO" target="_blank" rel="noopener noreferrer" aria-label="Open the KAUO Auburn tower feed on LiveATC">
-          <span class="tower-icon" aria-hidden="true">⌁</span><span>KAUO TOWER ↗</span>
-        </a>
+        <button class="tower-control" id="towerControl" type="button" data-state="off" aria-pressed="false" aria-label="Turn on the KAUO Ground, Tower, and CTAF radio stream">
+          <span class="tower-icon" aria-hidden="true">⌁</span><span class="tower-lamp" aria-hidden="true"></span>
+          <span class="tower-copy"><strong id="towerStatus">TOWER OFF</strong><small>KAUO · GND/TWR/CTAF</small></span>
+        </button>
       </div>
-      <div class="data-credit">ADS-B: <a href="https://airplanes.live/" target="_blank" rel="noopener noreferrer">Airplanes.live</a> · ENRICHMENT: <a href="https://www.flightaware.com/" target="_blank" rel="noopener noreferrer">FlightAware</a> · ATC: <a href="https://www.liveatc.net/" target="_blank" rel="noopener noreferrer">LiveATC.net</a></div>
+      <div class="data-credit">ADS-B: <a href="https://airplanes.live/" target="_blank" rel="noopener noreferrer">Airplanes.live</a> · ENRICHMENT: <a href="https://www.flightaware.com/" target="_blank" rel="noopener noreferrer">FlightAware</a> · <a href="https://www.liveatc.net/" target="_blank" rel="noopener noreferrer">Audio provided by and with permission from LiveATC.net</a></div>
     </div>
   </div>
 
@@ -325,6 +335,8 @@ const TYPES = {
 const WINDS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
 const AUBURN_SKYHAWK_PHOTO="assets/auburn-skyhawk.png";
 const AUBURN_TRANSITION_PLANE="assets/auburn-transition-plane.png";
+const NO_PLANE_FALLBACK="assets/auburn-fleet-fallback.png";
+const TOWER_STREAM_URL="https://s1-bos.liveatc.net/kauo1_gnd_twr";
 
 /* =============== MATH =============== */
 const R_MI=3958.8, d2r=d=>d*Math.PI/180, r2d=r=>r*180/Math.PI;
@@ -347,8 +359,30 @@ const toWind=b=>WINDS[Math.round(b/22.5)%16];
 
 /* =============== STATE =============== */
 let flights=[], current=null, currentIdx=0, demoMode=false, rotateStart=Date.now(), flightAwareCache={}, transitioning=false;
+let towerAudio=null, towerWanted=false;
 let miniMap=null, miniMapPlane=null, miniMapLine=null;
-const photoCache={}, routeCache={}, aircraftCache={};
+const PHOTO_CACHE_KEY="jacks-flightboard-photo-cache-v1";
+const PHOTO_CACHE_TTL=30*24*60*60*1000;
+const photoMisses=new Set(), routeCache={}, aircraftCache={};
+
+function loadPhotoCache(){
+  try{
+    const now=Date.now();
+    const stored=JSON.parse(localStorage.getItem(PHOTO_CACHE_KEY)||"{}");
+    return Object.fromEntries(Object.entries(stored).filter(([,photo])=>photo?.src&&now-(photo.savedAt||0)<PHOTO_CACHE_TTL));
+  }catch(e){ return {}; }
+}
+const photoCache=loadPhotoCache();
+
+function rememberPhoto(key,photo){
+  const saved={...photo,savedAt:Date.now()};
+  photoCache[key]=saved;
+  try{
+    const recent=Object.fromEntries(Object.entries(photoCache).sort((a,b)=>(b[1].savedAt||0)-(a[1].savedAt||0)).slice(0,80));
+    localStorage.setItem(PHOTO_CACHE_KEY,JSON.stringify(recent));
+  }catch(e){}
+  return saved;
+}
 
 // Safari versions used by some smart displays do not implement
 // AbortSignal.timeout(). Use a standard AbortController instead so the live
@@ -474,25 +508,21 @@ async function commonsPhoto(search, requiredText=""){
 }
 
 async function getPhoto(hex, reg, type, callsign){
-  const key=(reg||hex||type||"unknown").toUpperCase();
-  if(photoCache[key]!==undefined) return photoCache[key];
-
   if(isAuburnCallsign(callsign)){
-    const photo={src:AUBURN_SKYHAWK_PHOTO,credit:"Auburn Skyhawk training fleet",exact:false,livery:false,auburn:true};
-    photoCache[key]=photo;
-    return photo;
+    return {src:AUBURN_SKYHAWK_PHOTO,credit:"Auburn Skyhawk training fleet",exact:false,livery:false,auburn:true};
   }
 
   // First choice: the exact aircraft registration.
   if(reg){
-    try{
-      const exact=await commonsPhoto(reg,reg);
-      if(exact){
-        const photo={...exact,credit:"Exact aircraft · Wikimedia Commons",exact:true,livery:false};
-        photoCache[key]=photo;
-        return photo;
-      }
-    }catch(e){}
+    const exactKey=`REG:${reg.toUpperCase()}`;
+    if(photoCache[exactKey]) return photoCache[exactKey];
+    if(!photoMisses.has(exactKey)){
+      try{
+        const exact=await commonsPhoto(reg,reg);
+        if(exact) return rememberPhoto(exactKey,{...exact,credit:"Exact aircraft · Wikimedia Commons",exact:true,livery:false});
+      }catch(e){}
+      photoMisses.add(exactKey);
+    }
   }
 
   // Second choice: a matching airline + aircraft-type photo. This gives an
@@ -500,37 +530,34 @@ async function getPhoto(hex, reg, type, callsign){
   const airline=airlineFor(callsign||"");
   const typeName=TYPES[type]||"";
   if(airline?.i&&typeName){
-    try{
-      const livery=await commonsPhoto(`${airline.n} ${typeName}`);
-      if(livery){
-        const photo={...livery,credit:`${airline.n} livery · Wikimedia Commons`,exact:false,livery:true};
-        photoCache[key]=photo;
-        return photo;
-      }
-    }catch(e){}
+    const liveryKey=`LIVERY:${airline.i}:${type.toUpperCase()}`;
+    if(photoCache[liveryKey]) return photoCache[liveryKey];
+    if(!photoMisses.has(liveryKey)){
+      try{
+        const livery=await commonsPhoto(`${airline.n} ${typeName}`);
+        if(livery) return rememberPhoto(liveryKey,{...livery,credit:`${airline.n} livery · Wikimedia Commons`,exact:false,livery:true});
+      }catch(e){}
+      photoMisses.add(liveryKey);
+    }
   }
 
   // A real type reference is especially useful for private aircraft, which
   // often have no registration photo and no airline livery to fall back to.
   if(typeName){
-    try{
-      const typePhoto=await commonsPhoto(typeName,typeName);
-      if(typePhoto){
-        const photo={...typePhoto,credit:`${typeName} reference · Wikimedia Commons`,exact:false,livery:false,reference:true};
-        photoCache[key]=photo;
-        return photo;
-      }
-    }catch(e){}
+    const typeKey=`TYPE:${type.toUpperCase()}`;
+    if(photoCache[typeKey]) return photoCache[typeKey];
+    if(!photoMisses.has(typeKey)){
+      try{
+        const typePhoto=await commonsPhoto(typeName,typeName);
+        if(typePhoto) return rememberPhoto(typeKey,{...typePhoto,credit:`${typeName} reference · Wikimedia Commons`,exact:false,livery:false,reference:true});
+      }catch(e){}
+      photoMisses.add(typeKey);
+    }
   }
 
-  // Private and rarely photographed aircraft keep a neutral type silhouette.
-  const fallback={
-    src:TYPE_IMGS[type]||TYPE_IMGS.DEFAULT,
-    credit:TYPES[type]||type||"Aircraft",
-    exact:false,livery:false
-  };
-  photoCache[key]=fallback;
-  return fallback;
+  // Only after every useful photo lookup fails, show the Auburn fleet image
+  // without pretending that it depicts the exact aircraft on screen.
+  return {src:NO_PLANE_FALLBACK,exact:false,livery:false,fallback:true};
 }
 
 /* =============== HELPERS =============== */
@@ -691,24 +718,31 @@ function buildHero(f){
     slot.replaceChildren();
     const img=document.createElement("img");
     img.src=p.src;
-    img.alt=f.reg?`${typeName}, registration ${f.reg}`:typeName;
-    if(!p.exact&&!p.auburn){
+    img.alt=p.fallback?"Auburn aviation fleet":f.reg?`${typeName}, registration ${f.reg}`:typeName;
+    if(p.fallback){
+      img.style.objectFit="cover";
+    }else if(!p.exact&&!p.auburn){
       img.style.objectFit="contain";
       img.style.padding="20px";
       img.style.filter="drop-shadow(0 4px 24px rgba(0,0,0,.7))";
     }
     img.addEventListener("error",()=>{
-      img.src=TYPE_IMGS[f.type]||TYPE_IMGS.DEFAULT;
-      img.style.objectFit="contain";
-      img.style.padding="20px";
+      img.src=NO_PLANE_FALLBACK;
+      img.alt="Auburn aviation fleet";
+      img.style.objectFit="cover";
+      img.style.padding="0";
+      img.style.filter="none";
+      slot.querySelectorAll(".credit,.photo-badge").forEach(node=>node.remove());
     },{once:true});
     slot.appendChild(img);
 
-    const credit=document.createElement(p.link?"a":"div");
-    credit.className="credit";
-    credit.textContent=p.credit||typeName;
-    if(p.link){ credit.href=p.link; credit.target="_blank"; credit.rel="noopener noreferrer"; }
-    slot.appendChild(credit);
+    if(!p.fallback){
+      const credit=document.createElement(p.link?"a":"div");
+      credit.className="credit";
+      credit.textContent=p.credit||typeName;
+      if(p.link){ credit.href=p.link; credit.target="_blank"; credit.rel="noopener noreferrer"; }
+      slot.appendChild(credit);
+    }
 
     if(p.exact||p.livery||p.reference||p.auburn){
       const badge=document.createElement("div");
@@ -926,8 +960,75 @@ function setStatus(t,demo){ document.getElementById("statusTxt").textContent=t; 
 function tickClock(){ document.getElementById("clock").textContent=new Date().toLocaleTimeString("en-US",{hour12:false}); }
 function fitStage(){ document.getElementById("stage").style.transform=`scale(${Math.min(innerWidth/1920,innerHeight/1080)})`; }
 
+function setTowerState(state,label){
+  const control=document.getElementById("towerControl");
+  if(!control) return;
+  control.dataset.state=state;
+  control.setAttribute("aria-pressed",state==="listening"||state==="connecting"?"true":"false");
+  control.setAttribute("aria-label",state==="listening"||state==="connecting"
+    ?"Turn off the KAUO Ground, Tower, and CTAF radio stream"
+    :"Turn on the KAUO Ground, Tower, and CTAF radio stream");
+  document.getElementById("towerStatus").textContent=label;
+}
+
+function ensureTowerAudio(){
+  if(towerAudio) return towerAudio;
+  towerAudio=new Audio();
+  towerAudio.preload="none";
+  towerAudio.volume=.85;
+  towerAudio.addEventListener("playing",()=>{ if(towerWanted) setTowerState("listening","LISTENING"); });
+  towerAudio.addEventListener("waiting",()=>{ if(towerWanted) setTowerState("connecting","CONNECTING…"); });
+  towerAudio.addEventListener("error",()=>{
+    if(!towerWanted) return;
+    towerWanted=false;
+    disconnectTowerAudio();
+    setTowerState("blocked","FEED UNAVAILABLE");
+  });
+  return towerAudio;
+}
+
+function disconnectTowerAudio(){
+  if(!towerAudio) return;
+  towerAudio.pause();
+  towerAudio.removeAttribute("src");
+  towerAudio.load();
+}
+
+async function startTowerAudio(autoStart=false){
+  const audio=ensureTowerAudio();
+  towerWanted=true;
+  setTowerState("connecting","CONNECTING…");
+  if(audio.getAttribute("src")!==TOWER_STREAM_URL){
+    audio.src=TOWER_STREAM_URL;
+    audio.load();
+  }
+  try{
+    await audio.play();
+    if(towerWanted) setTowerState("listening","LISTENING");
+  }catch(e){
+    towerWanted=false;
+    disconnectTowerAudio();
+    setTowerState("blocked",autoStart?"TAP TO LISTEN":"TRY AGAIN");
+  }
+}
+
+function stopTowerAudio(){
+  towerWanted=false;
+  disconnectTowerAudio();
+  setTowerState("off","TOWER OFF");
+}
+
+function initTowerAudio(){
+  document.getElementById("towerControl").addEventListener("click",()=>{
+    if(towerWanted) stopTowerAudio();
+    else startTowerAudio(false);
+  });
+  startTowerAudio(true);
+}
+
 async function startBoard(){
   const transitionPreload=new Image(); transitionPreload.src=AUBURN_TRANSITION_PLANE;
+  initTowerAudio();
   await loadFlightAwareCache();
   fitStage(); addEventListener("resize",fitStage);
   tickClock(); setInterval(tickClock,1000);
