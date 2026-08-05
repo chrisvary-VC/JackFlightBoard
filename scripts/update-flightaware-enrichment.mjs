@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 
-const AUBURN = { lat: 32.604052, lon: -85.490536, radiusNm: 9 };
+const AUBURN = { lat: 32.604052, lon: -85.490536, radiusNm: 17 };
 const MAX_FLIGHTS = 8;
 const key = process.env.FLIGHTAWARE_API_KEY;
 

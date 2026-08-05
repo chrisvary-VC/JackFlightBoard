@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Doto:wght@400..900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   /* ==========================================================
      JACK'S FLIGHTBOARD · single-plane LED hero board
@@ -101,6 +103,10 @@
   .wind-bot{font-family:var(--dot);font-weight:var(--w-bold);font-size:22px;display:flex;gap:8px;align-items:center}
   .wind-sep{color:var(--led-dim)}
   .status{display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.2em}
+  .live-controls{display:flex;align-items:center;justify-content:flex-end;gap:14px}
+  .tower-link{display:inline-flex;align-items:center;gap:7px;padding:4px 8px;border:1px solid #34373a;border-radius:5px;background:rgba(13,15,17,.72);color:var(--led-dim);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;text-decoration:none;white-space:nowrap;transition:border-color .18s ease,color .18s ease,background .18s ease}
+  .tower-link .tower-icon{color:var(--amber);font-size:14px;line-height:1;text-shadow:0 0 8px rgba(255,190,77,.45)}
+  .tower-link:hover,.tower-link:focus-visible{border-color:var(--amber);background:rgba(255,190,77,.08);color:var(--led);outline:none}
   .data-credit{font-size:9px;letter-spacing:.12em;color:var(--led-dim);white-space:nowrap}
   .data-credit a{color:var(--led);font-weight:600;text-decoration:none}
   .data-credit a:hover{color:var(--amber)}
@@ -110,24 +116,33 @@
 
   /* ---------- aircraft changeover ---------- */
   .plane-transition{
-    position:absolute;z-index:30;left:0;top:44%;width:100%;height:130px;
-    pointer-events:none;overflow:visible;animation:flyThrough 1.05s cubic-bezier(.3,.02,.68,.99) both;
+    position:absolute;z-index:30;left:840px;top:500px;width:720px;height:430px;
+    pointer-events:none;overflow:visible;animation:flyThrough 1.55s cubic-bezier(.25,.04,.6,.98) both;
   }
   .plane-transition::before{
-    content:"";position:absolute;left:-420px;top:69px;width:390px;height:3px;
-    background:linear-gradient(90deg,transparent,rgba(255,190,77,.08),rgba(255,190,77,.7));
-    box-shadow:0 0 14px rgba(255,190,77,.45);
+    content:"";position:absolute;z-index:-2;left:-930px;top:218px;width:980px;height:13px;border-radius:50%;
+    background:linear-gradient(90deg,transparent,rgba(246,243,232,.05) 12%,rgba(246,243,232,.62) 76%,rgba(246,243,232,.08));
+    filter:blur(5px);transform:rotate(1.5deg);
+  }
+  .plane-transition::after{
+    content:"";position:absolute;z-index:-1;left:-900px;top:228px;width:950px;height:4px;border-radius:50%;
+    background:linear-gradient(90deg,transparent,rgba(242,101,34,.12) 18%,rgba(242,101,34,.88) 82%,rgba(242,101,34,.12));
+    box-shadow:0 0 12px rgba(242,101,34,.38);transform:rotate(1.5deg);
   }
   .plane-transition .fly-plane{
-    display:block;position:absolute;left:-180px;top:0;color:var(--amber);
-    font-family:var(--dot);font-size:118px;line-height:1;text-shadow:0 0 22px rgba(255,190,77,.65);
+    display:block;position:absolute;left:0;top:0;width:700px;height:auto;
+    filter:drop-shadow(0 22px 19px rgba(0,0,0,.62));
   }
+  .fly-light{position:absolute;width:7px;height:7px;border-radius:50%;animation:navBlink .42s ease-in-out infinite alternate}
+  .fly-light.port{left:66px;top:145px;background:#ff554e;box-shadow:0 0 13px #ff554e}
+  .fly-light.starboard{right:61px;top:120px;background:#69ffab;box-shadow:0 0 13px #69ffab}
+  @keyframes navBlink{from{opacity:.35}to{opacity:1}}
   @keyframes flyThrough{
-    0%{transform:translate3d(-80px,70px,0) scale(.72);opacity:0}
-    12%{opacity:1}
-    52%{transform:translate3d(1060px,-10px,0) scale(1);opacity:1}
+    0%{transform:translate3d(0,170px,0) rotate(-2deg) scale(1.62);opacity:0}
+    9%{opacity:1}
+    52%{transform:translate3d(560px,-120px,0) rotate(-2deg) scale(.72);opacity:1}
     88%{opacity:1}
-    100%{transform:translate3d(2250px,-105px,0) scale(1.18);opacity:0}
+    100%{transform:translate3d(1180px,-290px,0) rotate(-1deg) scale(.2);opacity:0}
   }
 
   /* ---------- HERO plane board ---------- */
@@ -149,35 +164,46 @@
   .idcol .airline{font-family:var(--dot);font-weight:var(--w-black);font-size:62px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .idcol .callsign{font-family:var(--dot);font-weight:var(--w-bold);font-size:40px;color:var(--amber);line-height:1}
   .idcol .type{font-family:var(--dot);font-weight:var(--w-bold);font-size:38px;line-height:1}
-  .route{margin-top:24px;transform:translateY(12px);width:100%;max-width:760px}
-  .route-card{display:grid;grid-template-columns:minmax(0,1fr) 350px minmax(0,1fr);gap:20px;align-items:center;width:100%}
+  .route{margin-top:4px;width:100%;max-width:760px;min-height:112px;padding:12px 14px;border-radius:10px;background:linear-gradient(90deg,rgba(5,7,8,.68),rgba(5,7,8,.46),rgba(5,7,8,.68));border:1px solid rgba(255,190,77,.1)}
+  .route-card{display:grid;grid-template-columns:124px minmax(400px,1fr) 124px;gap:16px;align-items:center;width:100%;min-height:86px}
   .route-stop:last-child{text-align:right}
-  .route-stop .code{font-family:var(--dot);font-weight:var(--w-black);font-size:38px;line-height:.9}
-  .route-stop .city{font-size:9px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--led-dim)}
-  .route-label{font-size:7px;letter-spacing:.18em;margin-bottom:5px;color:var(--amber)}
-  .route-track{position:relative;height:58px;margin-top:5px}
+  .route-stop .code{font-family:var(--dot);font-weight:var(--w-black);font-size:44px;line-height:.9}
+  .route-stop .city{font-size:10px;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--led-dim)}
+  .route-label{font-size:9px;letter-spacing:.18em;margin-bottom:6px;color:var(--amber)}
+  .route-track{position:relative;height:84px}
   .route-arc{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-  .route-arc path{fill:none;stroke:var(--amber);stroke-width:2;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(255,190,77,.5))}
-  .route-arc circle{fill:var(--amber);filter:drop-shadow(0 0 5px rgba(255,190,77,.8))}
-  .route-plane{position:absolute;z-index:1;left:calc(var(--progress) * 1%);top:var(--plane-y);transform:translate(-50%,-50%);font-family:var(--dot);font-size:21px;color:var(--amber);line-height:1;text-shadow:0 0 14px rgba(255,190,77,.8)}
-  .route-progress{position:absolute;left:0;top:51px;font-size:7px;letter-spacing:.14em;color:var(--led-dim);white-space:nowrap}
-  .route-pending{font-family:var(--dot);font-weight:var(--w-black);font-size:42px;color:var(--led-dim)}
+  .route-arc path{fill:none;stroke:var(--amber);stroke-width:4;stroke-linecap:round;filter:drop-shadow(0 0 6px rgba(255,190,77,.55))}
+  .route-arc circle{fill:var(--amber);filter:drop-shadow(0 0 6px rgba(255,190,77,.85))}
+  .route-plane{position:absolute;z-index:1;left:calc(var(--progress) * 1%);top:var(--plane-y);transform:translate(-50%,-50%);font-family:var(--dot);font-size:34px;color:var(--amber);line-height:1;text-shadow:0 0 2px var(--board),0 0 10px rgba(255,190,77,.85)}
+  .route-progress{position:absolute;left:50%;top:74px;transform:translateX(-50%);font-size:9px;letter-spacing:.14em;color:var(--led-dim);white-space:nowrap}
+  .route-pending{min-height:86px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
+  .route-pending .pending-title{font-family:var(--dot);font-weight:var(--w-black);font-size:34px;color:var(--led-dim)}
+  .route-pending .pending-meta{font-size:9px;letter-spacing:.18em;color:var(--led-dim)}
 
   /* data strip */
   .strip{background:var(--panel);border:1px solid #1e2124;border-radius:12px;
-    display:grid;grid-template-columns:640px 1fr;gap:48px;padding:24px 42px;align-items:center;position:relative;overflow:hidden}
+    display:grid;grid-template-columns:390px 350px 1fr;gap:34px;padding:20px 30px;align-items:center;position:relative;overflow:hidden}
   .strip .led-bg{border-radius:12px}
-  .look{display:grid;grid-template-columns:200px 1fr;gap:32px;align-items:center}
+  .map-panel{height:272px;position:relative;z-index:2;border:1px solid #292c2f;border-radius:10px;overflow:hidden;background:#090b0c}
+  .map-title{position:absolute;z-index:500;left:10px;top:9px;padding:5px 8px;border-radius:4px;background:rgba(5,7,8,.78);font-size:9px;letter-spacing:.18em;color:var(--amber);pointer-events:none}
+  #flight-map{width:100%;height:100%;background:#0b0d0e}
+  #flight-map .leaflet-tile-pane{filter:grayscale(.78) invert(.91) hue-rotate(155deg) brightness(.48) contrast(1.25)}
+  #flight-map .leaflet-control-attribution{font-family:var(--mono);font-size:8px;background:rgba(5,7,8,.72);color:#aaa}
+  #flight-map .leaflet-control-attribution a{color:#d8d3c6}
+  .map-plane-icon{background:transparent;border:0}
+  .map-plane-icon span{display:block;color:var(--amber);font-family:var(--dot);font-size:30px;line-height:30px;text-shadow:0 0 3px #050708,0 0 12px rgba(255,190,77,.95);transform-origin:50% 50%}
+  .map-fallback{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--dot);font-size:18px;color:var(--led-dim);line-height:1.5}
+  .look{display:flex;align-items:center}
   .rose{width:200px;height:200px}
-  .look .big{display:flex;flex-direction:column;gap:14px}
-  .look .dist{font-family:var(--dot);font-weight:var(--w-black);font-size:140px;line-height:.8;color:var(--amber)}
-  .look .dist small{font-size:50px;font-weight:var(--w-bold)}
-  .look .dir{font-family:var(--dot);font-weight:var(--w-black);font-size:70px;line-height:.9}
-  .look .k{font-size:14px;margin-top:8px}
+  .look .big{display:flex;flex-direction:column;gap:20px}
+  .look .dist{font-family:var(--dot);font-weight:var(--w-black);font-size:112px;line-height:.78;color:var(--amber)}
+  .look .dist small{font-size:38px;font-weight:var(--w-bold)}
+  .look .dir{font-family:var(--dot);font-weight:var(--w-black);font-size:56px;line-height:.9}
+  .look .k{font-size:12px;margin-top:8px}
   .tele{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:20px 56px;align-content:center}
   .tele .cell{display:flex;flex-direction:column;gap:6px}
-  .tele .cell .k{font-size:15px}
-  .tele .v{font-family:var(--dot);font-weight:var(--w-black);font-size:62px;line-height:.85;transition:color .25s}
+  .tele .cell .k{font-size:13px}
+  .tele .v{font-family:var(--dot);font-weight:var(--w-black);font-size:54px;line-height:.85;transition:color .25s}
   .tele .v.up{color:var(--green)} .tele .v.dn{color:var(--red)}
   .flash{animation:flash .5s ease}
   @keyframes flash{0%{filter:brightness(1.9)}100%{filter:brightness(1)}}
@@ -189,16 +215,20 @@
   .rot .idx{font-family:var(--dot);font-weight:var(--w-bold);font-size:24px;color:var(--led-dim);white-space:nowrap}
   .rot .bar{flex:1;height:9px;border-radius:6px;background:#1a1d20;overflow:hidden}
   .rot .fill{height:100%;width:0;background:linear-gradient(90deg,var(--amber),#ffd98a);box-shadow:0 0 12px var(--amber)}
-  .upnext{display:flex;align-items:center;gap:10px}
-  .upnext .lbl{font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.22em;color:var(--led-dim);white-space:nowrap}
-  .mini{flex:1;display:flex;align-items:center;gap:9px;background:#0d0f11;border:1px solid #1e2124;border-radius:9px;padding:8px 10px;min-width:0}
-  .mini .mlogo{width:38px;height:38px;border-radius:6px;background:#20242e;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
-  .mini .mlogo img{width:76%;height:76%;object-fit:contain}
-  .mini .mlogo .fb{font-family:var(--dot);font-weight:800;font-size:18px}
+  .upnext{display:flex;align-items:center;gap:8px}
+  .upnext .lbl{width:82px;flex:0 0 82px;font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.22em;color:var(--led-dim);white-space:nowrap}
+  .mini{flex:1;height:66px;display:flex;align-items:center;gap:8px;background:#0d0f11;border:1px solid #1e2124;border-radius:9px;padding:7px 9px;min-width:0}
+  .mini .mlogo{width:54px;height:54px;border-radius:7px;background:#20242e;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
+  .mini .mlogo img{width:94%;height:94%;object-fit:contain}
+  .mini .mlogo .fb{font-family:var(--dot);font-weight:800;font-size:25px}
   .mini .mtxt{min-width:0}
-  .mini .mcall{font-family:var(--dot);font-weight:800;font-size:20px;line-height:1;color:var(--led);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mini .mmeta{font-family:var(--mono);font-size:11px;color:var(--led-dim);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mini .mdist{margin-left:auto;font-family:var(--dot);font-weight:800;font-size:22px;color:var(--amber);white-space:nowrap;flex:0 0 auto}
+  .mini .mcall{font-family:var(--dot);font-weight:800;font-size:18px;line-height:1;color:var(--led);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .mroute{font-family:var(--dot);font-weight:700;font-size:13px;line-height:1;color:var(--amber);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .mmeta{font-family:var(--mono);font-size:9px;color:var(--led-dim);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .mdist{margin-left:auto;font-family:var(--dot);font-weight:800;font-size:18px;color:var(--amber);white-space:nowrap;flex:0 0 auto}
+  .mini-empty{border-style:dashed;background:rgba(13,15,17,.55);opacity:.58}
+  .mini-empty .empty-radar{width:28px;flex:0 0 28px;text-align:center;font-size:20px;color:var(--led-dim)}
+  .mini-empty .mroute{color:var(--led-dim);font-size:11px}
 
   .empty{grid-row:1 / -1;display:flex;align-items:center;justify-content:center}
   .empty .msg{font-family:var(--dot);font-weight:var(--w-bold);font-size:44px;color:var(--led-dim);text-align:center;line-height:1.3}
@@ -211,7 +241,7 @@
     <div class="led-bg"></div><div class="sheen"></div>
     <div>
       <h1 class="glow">JACK'S&nbsp;FLIGHTBOARD</h1>
-      <div class="sub k">Auburn, Alabama · 10 mi look-out sweep</div>
+      <div class="sub k">Auburn, Alabama · 20 mi look-out sweep</div>
     </div>
     <div class="mid">
       <div class="chip"><div class="v glow" id="count">--</div><div class="k">In range</div></div>
@@ -236,8 +266,13 @@
     </div>
     <div class="clockwrap">
       <div id="clock" class="glow">--:--:--</div>
-      <div class="status" id="status"><span class="lamp"></span><span id="statusTxt">CONNECTING…</span></div>
-      <div class="data-credit">ADS-B: <a href="https://airplanes.live/" target="_blank" rel="noopener noreferrer">Airplanes.live</a> · ENRICHMENT: <a href="https://www.flightaware.com/" target="_blank" rel="noopener noreferrer">FlightAware</a></div>
+      <div class="live-controls">
+        <div class="status" id="status"><span class="lamp"></span><span id="statusTxt">CONNECTING…</span></div>
+        <a class="tower-link" href="https://www.liveatc.net/search/?icao=KAUO" target="_blank" rel="noopener noreferrer" aria-label="Open the KAUO Auburn tower feed on LiveATC">
+          <span class="tower-icon" aria-hidden="true">⌁</span><span>KAUO TOWER ↗</span>
+        </a>
+      </div>
+      <div class="data-credit">ADS-B: <a href="https://airplanes.live/" target="_blank" rel="noopener noreferrer">Airplanes.live</a> · ENRICHMENT: <a href="https://www.flightaware.com/" target="_blank" rel="noopener noreferrer">FlightAware</a> · ATC: <a href="https://www.liveatc.net/" target="_blank" rel="noopener noreferrer">LiveATC.net</a></div>
     </div>
   </div>
 
@@ -248,7 +283,7 @@
 /* =============== CONFIG =============== */
 const CONFIG = {
   lat: 32.604052, lon: -85.490536,   // Auburn University
-  radiusMiles: 10,
+  radiusMiles: 20,
   refreshMs: 8000,
   rotateMs: 10000,
   tickMs: 1000
@@ -289,6 +324,7 @@ const TYPES = {
 };
 const WINDS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
 const AUBURN_SKYHAWK_PHOTO="assets/auburn-skyhawk.png";
+const AUBURN_TRANSITION_PLANE="assets/auburn-transition-plane.png";
 
 /* =============== MATH =============== */
 const R_MI=3958.8, d2r=d=>d*Math.PI/180, r2d=r=>r*180/Math.PI;
@@ -311,6 +347,7 @@ const toWind=b=>WINDS[Math.round(b/22.5)%16];
 
 /* =============== STATE =============== */
 let flights=[], current=null, currentIdx=0, demoMode=false, rotateStart=Date.now(), flightAwareCache={}, transitioning=false;
+let miniMap=null, miniMapPlane=null, miniMapLine=null;
 const photoCache={}, routeCache={}, aircraftCache={};
 
 // Safari versions used by some smart displays do not implement
@@ -529,10 +566,54 @@ function miniLogo(cs){
   return `<div class="mlogo"><div class="fb dot">✈</div></div>`;
 }
 
+/* =============== LIVE MAP =============== */
+function disposeFlightMap(){
+  if(miniMap){ miniMap.remove(); miniMap=null; }
+  miniMapPlane=null; miniMapLine=null;
+}
+function initFlightMap(f){
+  const node=document.getElementById("flight-map"); if(!node) return;
+  if(typeof window.L==="undefined"){
+    node.innerHTML=`<div class="map-fallback">MAP UNAVAILABLE<br>${f.lat.toFixed(3)}, ${f.lon.toFixed(3)}</div>`;
+    return;
+  }
+  const L=window.L;
+  miniMap=L.map(node,{zoomControl:false,attributionControl:true,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false,fadeAnimation:false,zoomAnimation:false,markerZoomAnimation:false});
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
+    maxZoom:19,
+    updateWhenIdle:true,
+    keepBuffer:1,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>'
+  }).addTo(miniMap);
+  L.circleMarker([CONFIG.lat,CONFIG.lon],{radius:5,color:"#f26522",weight:2,fillColor:"#03244d",fillOpacity:1,interactive:false}).addTo(miniMap);
+  miniMapLine=L.polyline([[CONFIG.lat,CONFIG.lon],[f.lat,f.lon]],{color:"#ffbe4d",weight:2,opacity:.68,dashArray:"3 7",interactive:false}).addTo(miniMap);
+  const icon=L.divIcon({
+    className:"map-plane-icon",
+    html:`<span style="transform:rotate(${Math.round(f.track||0)}deg)">✈</span>`,
+    iconSize:[30,30],iconAnchor:[15,15]
+  });
+  miniMapPlane=L.marker([f.lat,f.lon],{icon,interactive:false}).addTo(miniMap);
+  const bounds=L.latLngBounds([[CONFIG.lat,CONFIG.lon],[f.lat,f.lon]]);
+  if(bounds.isValid()&&distMi(CONFIG.lat,CONFIG.lon,f.lat,f.lon)>.15) miniMap.fitBounds(bounds,{padding:[42,42],maxZoom:13,animate:false});
+  else miniMap.setView([CONFIG.lat,CONFIG.lon],13,{animate:false});
+  setTimeout(()=>miniMap?.invalidateSize(false),0);
+}
+function updateFlightMap(f){
+  if(miniMapPlane){
+    miniMapPlane.setLatLng([f.lat,f.lon]);
+    miniMapLine?.setLatLngs([[CONFIG.lat,CONFIG.lon],[f.lat,f.lon]]);
+    const glyph=miniMapPlane.getElement()?.querySelector("span");
+    if(glyph) glyph.style.transform=`rotate(${Math.round(f.track||0)}deg)`;
+    return;
+  }
+  const fallback=document.querySelector("#flight-map .map-fallback");
+  if(fallback) fallback.innerHTML=`MAP UNAVAILABLE<br>${f.lat.toFixed(3)}, ${f.lon.toFixed(3)}`;
+}
+
 /* =============== RENDER =============== */
 function routeArcY(progress){
   const t=progress/100;
-  return 42-48*t*(1-t);
+  return 54-88*t*(1-t);
 }
 function buildHero(f){
   withDelta(f);
@@ -549,13 +630,14 @@ function buildHero(f){
   const routeY=routeArcY(routeProgress);
   const routeHTML=f.orig&&f.dest
     ? `<div class="route-card">
-         <div class="route-stop"><div class="route-label k">DEPARTED</div><div class="code glow">${f.orig.code}</div><div class="city k">${f.orig.city||""}</div></div>
-         <div class="route-track" id="route-track" style="--progress:${routeProgress};--plane-y:${routeY}px"><svg class="route-arc" viewBox="0 0 350 58" preserveAspectRatio="none" aria-hidden="true"><path d="M 0 42 Q 175 18 350 42"/><circle cx="350" cy="42" r="4"/></svg><span class="route-plane">✈</span><span class="route-progress k" id="route-progress">APPROX. ${routeProgress}% COMPLETE</span></div>
-         <div class="route-stop"><div class="route-label k">ARRIVING</div><div class="code glow">${f.dest.code}</div><div class="city k">${f.dest.city||""}</div></div>
+         <div class="route-stop"><div class="route-label k">ORIGIN</div><div class="code glow">${f.orig.code}</div><div class="city k">${f.orig.city||""}</div></div>
+         <div class="route-track" id="route-track" style="--progress:${routeProgress};--plane-y:${routeY}px"><svg class="route-arc" viewBox="0 0 420 84" preserveAspectRatio="none" aria-hidden="true"><path d="M 4 54 Q 210 8 416 54"/><circle cx="4" cy="54" r="5"/><circle cx="416" cy="54" r="5"/></svg><span class="route-plane">✈</span><span class="route-progress k" id="route-progress">APPROX. ${routeProgress}% COMPLETE</span></div>
+         <div class="route-stop"><div class="route-label k">DESTINATION</div><div class="code glow">${f.dest.code}</div><div class="city k">${f.dest.city||""}</div></div>
        </div>`
-    : `<div class="route-pending glow">ROUTE PENDING</div>`;
+    : `<div class="route-pending"><div class="pending-title glow">ROUTE NOT PUBLISHED</div><div class="pending-meta k">${f.callsign} · ${typeName}</div></div>`;
 
   const hero=document.getElementById("hero");
+  disposeFlightMap();
   hero.innerHTML=`
     <div class="led-bg"></div><div class="sheen"></div><div class="mascot"></div>
     <div class="hero-top">
@@ -575,8 +657,11 @@ function buildHero(f){
 
     <div class="strip">
       <div class="led-bg"></div>
+      <div class="map-panel">
+        <div class="map-title k">APPROX. LIVE POSITION</div>
+        <div id="flight-map" role="img" aria-label="Map showing the aircraft's approximate live position near Auburn"></div>
+      </div>
       <div class="look">
-        <div id="rose">${roseSVG(f.brg)}</div>
         <div class="big">
           <div><div class="dist glow-amber"><span id="v-dist">${f.dist.toFixed(1)}</span><small>mi</small></div><div class="k">Distance</div></div>
           <div><div class="dir glow" id="v-dir">${toWind(f.brg)} · ${Math.round(f.brg)}°</div><div class="k">Look this way</div></div>
@@ -598,6 +683,7 @@ function buildHero(f){
       <div class="upnext" id="upnext"><span class="lbl">NEXT UP</span></div>
     </div>`;
 
+  initFlightMap(f);
   getPhoto(f.hex, f.reg, f.type, f.callsign).then(p=>{
     const slot=hero.querySelector(`.photo[data-hex="${f.hex}"]`);
     if(!slot) return;
@@ -653,21 +739,31 @@ function updateRouteProgress(f){
 function renderUpNext(){
   const wrap=document.getElementById("upnext"); if(!wrap) return;
   let html=`<span class="lbl">NEXT UP</span>`;
-  if(flights.length<=1){
-    html+=`<div class="mini"><div class="mtxt"><div class="mcall" style="color:var(--led-dim);font-size:18px">SOLO IN THE SKY</div><div class="mmeta">no other traffic in range</div></div></div>`;
-  }else{
-    const upcoming=Math.min(5,flights.length-1);
-    for(let j=1;j<=upcoming;j++){
+  const upcoming=Math.min(5,Math.max(0,flights.length-1));
+  for(let j=1;j<=5;j++){
+    if(j<=upcoming){
       const f=flights[(currentIdx+j)%flights.length];
-      if(!f) break;
       withDelta(f);
+      const route=f.orig?.code&&f.dest?.code
+        ? `${f.orig.code} → ${f.dest.code}`
+        : isAuburnCallsign(f.callsign)?"LOCAL TRAINING":"ROUTE NOT PUBLISHED";
       html+=`<div class="mini">
         ${miniLogo(f.callsign)}
         <div class="mtxt">
           <div class="mcall">${f.callsign}</div>
+          <div class="mroute">${route}</div>
           <div class="mmeta">${TYPES[f.type]||f.type||"—"} · ${toWind(f.brg)} ${Math.round(f.brg)}°</div>
         </div>
-        <div class="mdist">${f.dist.toFixed(0)}<span style="font-size:14px">mi</span></div>
+        <div class="mdist">${f.dist.toFixed(0)}<span style="font-size:11px">mi</span></div>
+      </div>`;
+    }else{
+      html+=`<div class="mini mini-empty">
+        <div class="empty-radar dot">·</div>
+        <div class="mtxt">
+          <div class="mcall">OPEN SKY</div>
+          <div class="mroute">AWAITING TRAFFIC</div>
+          <div class="mmeta">WITHIN ${CONFIG.radiusMiles} MI</div>
+        </div>
       </div>`;
     }
   }
@@ -693,7 +789,7 @@ function updateTele(f){
   setVal("v-trk",`${Math.round(f.track)}° ${toWind(f.track)}`);
   const vr=Math.round(f.vrFpm||0);
   setVal("v-vr",(vr>0?"+":"")+vr.toLocaleString()+"fpm", vr>150?"up":vr<-150?"dn":"");
-  const rose=document.getElementById("rose"); if(rose) rose.innerHTML=roseSVG(f.brg);
+  updateFlightMap(f);
 }
 
 /* =============== ROTATION =============== */
@@ -714,20 +810,27 @@ function flyToPlane(i){
   const flyby=document.createElement("div");
   flyby.className="plane-transition";
   flyby.setAttribute("aria-hidden","true");
-  const plane=document.createElement("span");
+  const plane=document.createElement("img");
   plane.className="fly-plane";
-  plane.textContent="✈";
+  plane.src=AUBURN_TRANSITION_PLANE;
+  plane.alt="";
   flyby.appendChild(plane);
+  for(const side of ["port","starboard"]){
+    const light=document.createElement("span");
+    light.className=`fly-light ${side}`;
+    flyby.appendChild(light);
+  }
   document.getElementById("stage").appendChild(flyby);
 
   let swapped=false;
   const swap=()=>{ if(!swapped){ swapped=true; showPlaneAt(i); } };
   const cleanup=()=>{ swap(); flyby.remove(); transitioning=false; };
-  setTimeout(swap,500);
-  const fallback=setTimeout(cleanup,1400);
+  setTimeout(swap,780);
+  const fallback=setTimeout(cleanup,1900);
   flyby.addEventListener("animationend",()=>{ clearTimeout(fallback); cleanup(); },{once:true});
 }
 function renderEmpty(){
+  disposeFlightMap();
   document.getElementById("hero").innerHTML=
     `<div class="led-bg"></div><div class="sheen"></div><div class="mascot"></div>
      <div class="empty"><div class="msg glow">CLEAR SKIES OVER AUBURN<br><span style="font-size:24px;color:var(--led-dim)">no aircraft within ${CONFIG.radiusMiles} miles</span></div></div>`;
@@ -824,6 +927,7 @@ function tickClock(){ document.getElementById("clock").textContent=new Date().to
 function fitStage(){ document.getElementById("stage").style.transform=`scale(${Math.min(innerWidth/1920,innerHeight/1080)})`; }
 
 async function startBoard(){
+  const transitionPreload=new Image(); transitionPreload.src=AUBURN_TRANSITION_PLANE;
   await loadFlightAwareCache();
   fitStage(); addEventListener("resize",fitStage);
   tickClock(); setInterval(tickClock,1000);
