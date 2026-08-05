@@ -1,5 +1,30 @@
 {
-  "updatedAt": null,
+  "updatedAt": "2026-08-05T18:55:46.122Z",
   "source": "FlightAware AeroAPI cache — refreshed every 12 hours by GitHub Actions",
-  "flights": {}
+  "flights": {
+    "N1657R": {
+      "cachedAt": "2026-08-05T18:55:45.381Z",
+      "flightId": "N1657R-1785955332-adhoc-2522p",
+      "aircraftType": "C82R",
+      "origin": null,
+      "destination": null,
+      "status": "En Route"
+    },
+    "DAL1640": {
+      "cachedAt": "2026-08-05T18:55:45.827Z",
+      "flightId": "DAL1640-1785730942-fa-1917p",
+      "aircraftType": "B712",
+      "origin": null,
+      "destination": null,
+      "status": "En Route / On Time"
+    },
+    "JIA5437": {
+      "cachedAt": "2026-08-05T18:55:46.122Z",
+      "flightId": "JIA5437-1785733826-airline-1263p",
+      "aircraftType": "CRJ9",
+      "origin": null,
+      "destination": null,
+      "status": "En Route / On Time"
+    }
+  }
 }
