@@ -268,8 +268,8 @@
       <div id="clock" class="glow">--:--:--</div>
       <div class="live-controls">
         <div class="status" id="status"><span class="lamp"></span><span id="statusTxt">CONNECTING…</span></div>
-        <a class="tower-link" href="https://www.liveatc.net/search/?icao=KAUO" target="_blank" rel="noopener noreferrer" aria-label="Open the KAUO Auburn tower feed on LiveATC">
-          <span class="tower-icon" aria-hidden="true">⌁</span><span>KAUO TOWER ↗</span>
+        <a class="tower-link" href="https://www.liveatc.net/hlisten.php?mount=kauo1_atis&amp;icao=kauo" target="_blank" rel="noopener noreferrer" onclick="return openTowerRadio(event,this.href)" aria-label="Open the KAUO Auburn radio player on LiveATC">
+          <span class="tower-icon" aria-hidden="true">⌁</span><span>KAUO RADIO ↗</span>
         </a>
       </div>
       <div class="data-credit">ADS-B: <a href="https://airplanes.live/" target="_blank" rel="noopener noreferrer">Airplanes.live</a> · ENRICHMENT: <a href="https://www.flightaware.com/" target="_blank" rel="noopener noreferrer">FlightAware</a> · ATC: <a href="https://www.liveatc.net/" target="_blank" rel="noopener noreferrer">LiveATC.net</a></div>
@@ -325,6 +325,7 @@ const TYPES = {
 const WINDS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
 const AUBURN_SKYHAWK_PHOTO="assets/auburn-skyhawk.png";
 const AUBURN_TRANSITION_PLANE="assets/auburn-transition-plane.png";
+const NO_PLANE_FALLBACK="assets/auburn-fleet-fallback.png";
 
 /* =============== MATH =============== */
 const R_MI=3958.8, d2r=d=>d*Math.PI/180, r2d=r=>r*180/Math.PI;
@@ -348,7 +349,28 @@ const toWind=b=>WINDS[Math.round(b/22.5)%16];
 /* =============== STATE =============== */
 let flights=[], current=null, currentIdx=0, demoMode=false, rotateStart=Date.now(), flightAwareCache={}, transitioning=false;
 let miniMap=null, miniMapPlane=null, miniMapLine=null;
-const photoCache={}, routeCache={}, aircraftCache={};
+const PHOTO_CACHE_KEY="jacks-flightboard-photo-cache-v1";
+const PHOTO_CACHE_TTL=30*24*60*60*1000;
+const photoMisses=new Set(), routeCache={}, aircraftCache={};
+
+function loadPhotoCache(){
+  try{
+    const now=Date.now();
+    const stored=JSON.parse(localStorage.getItem(PHOTO_CACHE_KEY)||"{}");
+    return Object.fromEntries(Object.entries(stored).filter(([,photo])=>photo?.src&&now-(photo.savedAt||0)<PHOTO_CACHE_TTL));
+  }catch(e){ return {}; }
+}
+const photoCache=loadPhotoCache();
+
+function rememberPhoto(key,photo){
+  const saved={...photo,savedAt:Date.now()};
+  photoCache[key]=saved;
+  try{
+    const recent=Object.fromEntries(Object.entries(photoCache).sort((a,b)=>(b[1].savedAt||0)-(a[1].savedAt||0)).slice(0,80));
+    localStorage.setItem(PHOTO_CACHE_KEY,JSON.stringify(recent));
+  }catch(e){}
+  return saved;
+}
 
 // Safari versions used by some smart displays do not implement
 // AbortSignal.timeout(). Use a standard AbortController instead so the live
@@ -474,25 +496,21 @@ async function commonsPhoto(search, requiredText=""){
 }
 
 async function getPhoto(hex, reg, type, callsign){
-  const key=(reg||hex||type||"unknown").toUpperCase();
-  if(photoCache[key]!==undefined) return photoCache[key];
-
   if(isAuburnCallsign(callsign)){
-    const photo={src:AUBURN_SKYHAWK_PHOTO,credit:"Auburn Skyhawk training fleet",exact:false,livery:false,auburn:true};
-    photoCache[key]=photo;
-    return photo;
+    return {src:AUBURN_SKYHAWK_PHOTO,credit:"Auburn Skyhawk training fleet",exact:false,livery:false,auburn:true};
   }
 
   // First choice: the exact aircraft registration.
   if(reg){
-    try{
-      const exact=await commonsPhoto(reg,reg);
-      if(exact){
-        const photo={...exact,credit:"Exact aircraft · Wikimedia Commons",exact:true,livery:false};
-        photoCache[key]=photo;
-        return photo;
-      }
-    }catch(e){}
+    const exactKey=`REG:${reg.toUpperCase()}`;
+    if(photoCache[exactKey]) return photoCache[exactKey];
+    if(!photoMisses.has(exactKey)){
+      try{
+        const exact=await commonsPhoto(reg,reg);
+        if(exact) return rememberPhoto(exactKey,{...exact,credit:"Exact aircraft · Wikimedia Commons",exact:true,livery:false});
+      }catch(e){}
+      photoMisses.add(exactKey);
+    }
   }
 
   // Second choice: a matching airline + aircraft-type photo. This gives an
@@ -500,41 +518,50 @@ async function getPhoto(hex, reg, type, callsign){
   const airline=airlineFor(callsign||"");
   const typeName=TYPES[type]||"";
   if(airline?.i&&typeName){
-    try{
-      const livery=await commonsPhoto(`${airline.n} ${typeName}`);
-      if(livery){
-        const photo={...livery,credit:`${airline.n} livery · Wikimedia Commons`,exact:false,livery:true};
-        photoCache[key]=photo;
-        return photo;
-      }
-    }catch(e){}
+    const liveryKey=`LIVERY:${airline.i}:${type.toUpperCase()}`;
+    if(photoCache[liveryKey]) return photoCache[liveryKey];
+    if(!photoMisses.has(liveryKey)){
+      try{
+        const livery=await commonsPhoto(`${airline.n} ${typeName}`);
+        if(livery) return rememberPhoto(liveryKey,{...livery,credit:`${airline.n} livery · Wikimedia Commons`,exact:false,livery:true});
+      }catch(e){}
+      photoMisses.add(liveryKey);
+    }
   }
 
   // A real type reference is especially useful for private aircraft, which
   // often have no registration photo and no airline livery to fall back to.
   if(typeName){
-    try{
-      const typePhoto=await commonsPhoto(typeName,typeName);
-      if(typePhoto){
-        const photo={...typePhoto,credit:`${typeName} reference · Wikimedia Commons`,exact:false,livery:false,reference:true};
-        photoCache[key]=photo;
-        return photo;
-      }
-    }catch(e){}
+    const typeKey=`TYPE:${type.toUpperCase()}`;
+    if(photoCache[typeKey]) return photoCache[typeKey];
+    if(!photoMisses.has(typeKey)){
+      try{
+        const typePhoto=await commonsPhoto(typeName,typeName);
+        if(typePhoto) return rememberPhoto(typeKey,{...typePhoto,credit:`${typeName} reference · Wikimedia Commons`,exact:false,livery:false,reference:true});
+      }catch(e){}
+      photoMisses.add(typeKey);
+    }
   }
 
-  // Private and rarely photographed aircraft keep a neutral type silhouette.
-  const fallback={
-    src:TYPE_IMGS[type]||TYPE_IMGS.DEFAULT,
-    credit:TYPES[type]||type||"Aircraft",
-    exact:false,livery:false
-  };
-  photoCache[key]=fallback;
-  return fallback;
+  // Only after every useful photo lookup fails, show the Auburn fleet image
+  // without pretending that it depicts the exact aircraft on screen.
+  return {src:NO_PLANE_FALLBACK,exact:false,livery:false,fallback:true};
 }
 
 /* =============== HELPERS =============== */
 function isAuburnCallsign(cs){ return /^AUB\d+$/.test((cs||"").trim().toUpperCase()); }
+function openTowerRadio(event,url){
+  const width=760, height=680;
+  const left=Math.max(0,Math.round((screen.availWidth-width)/2));
+  const top=Math.max(0,Math.round((screen.availHeight-height)/2));
+  const player=window.open(url,"kauoLiveATC",`popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+  if(player){
+    event.preventDefault();
+    player.focus();
+    return false;
+  }
+  return true;
+}
 function airlineFor(cs){
   const callsign=(cs||"").trim().toUpperCase();
   if(isAuburnCallsign(callsign)) return AIRLINES.AUB;
@@ -691,24 +718,31 @@ function buildHero(f){
     slot.replaceChildren();
     const img=document.createElement("img");
     img.src=p.src;
-    img.alt=f.reg?`${typeName}, registration ${f.reg}`:typeName;
-    if(!p.exact&&!p.auburn){
+    img.alt=p.fallback?"Auburn aviation fleet":f.reg?`${typeName}, registration ${f.reg}`:typeName;
+    if(p.fallback){
+      img.style.objectFit="cover";
+    }else if(!p.exact&&!p.auburn){
       img.style.objectFit="contain";
       img.style.padding="20px";
       img.style.filter="drop-shadow(0 4px 24px rgba(0,0,0,.7))";
     }
     img.addEventListener("error",()=>{
-      img.src=TYPE_IMGS[f.type]||TYPE_IMGS.DEFAULT;
-      img.style.objectFit="contain";
-      img.style.padding="20px";
+      img.src=NO_PLANE_FALLBACK;
+      img.alt="Auburn aviation fleet";
+      img.style.objectFit="cover";
+      img.style.padding="0";
+      img.style.filter="none";
+      slot.querySelectorAll(".credit,.photo-badge").forEach(node=>node.remove());
     },{once:true});
     slot.appendChild(img);
 
-    const credit=document.createElement(p.link?"a":"div");
-    credit.className="credit";
-    credit.textContent=p.credit||typeName;
-    if(p.link){ credit.href=p.link; credit.target="_blank"; credit.rel="noopener noreferrer"; }
-    slot.appendChild(credit);
+    if(!p.fallback){
+      const credit=document.createElement(p.link?"a":"div");
+      credit.className="credit";
+      credit.textContent=p.credit||typeName;
+      if(p.link){ credit.href=p.link; credit.target="_blank"; credit.rel="noopener noreferrer"; }
+      slot.appendChild(credit);
+    }
 
     if(p.exact||p.livery||p.reference||p.auburn){
       const badge=document.createElement("div");
