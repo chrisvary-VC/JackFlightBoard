@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head><title>Photo API Test</title>
+<style>body{background:#111;color:#fff;font-family:monospace;padding:20px} img{max-width:400px;border:2px solid #444;display:block;margin:10px 0} .ok{color:#7f7}.fail{color:#f77}.section{margin:20px 0;padding:15px;background:#1a1a1a;border-radius:8px}</style>
+</head>
+<body>
+<h2>Aircraft Photo Source Test</h2>
+<p>Open browser console for details. Testing hex: a4a6ad (American N822NN B738)</p>
+
+<div class="section">
+<h3>Test 1: Planespotters JSON API + wsrv.nl proxy</h3>
+<div id="t1">testing...</div>
+</div>
+
+<div class="section">
+<h3>Test 2: Planespotters JSON API — raw CDN URL (no proxy)</h3>
+<div id="t2">testing...</div>
+</div>
+
+<div class="section">
+<h3>Test 3: airport-data.com by registration</h3>
+<img id="t3img" src="https://www.airport-data.com/images/aircraft/thumbnails/N822NN.jpg"
+  onload="document.getElementById('t3').className='ok';document.getElementById('t3').textContent='✓ WORKS'"
+  onerror="document.getElementById('t3').className='fail';document.getElementById('t3').textContent='✗ FAILED'">
+<div id="t3">loading...</div>
+</div>
+
+<div class="section">
+<h3>Test 4: airport-data.com full size by reg</h3>
+<img id="t4img" src="https://www.airport-data.com/images/aircraft/N822NN.jpg"
+  onload="document.getElementById('t4').className='ok';document.getElementById('t4').textContent='✓ WORKS'"
+  onerror="document.getElementById('t4').className='fail';document.getElementById('t4').textContent='✗ FAILED'">
+<div id="t4">loading...</div>
+</div>
+
+<div class="section">
+<h3>Test 5: Planespotters direct img (no fetch)</h3>
+<img id="t5img" src="https://api.planespotters.net/pub/photos/hex/a4a6ad"
+  onload="document.getElementById('t5').className='ok';document.getElementById('t5').textContent='✓ WORKS'"
+  onerror="document.getElementById('t5').className='fail';document.getElementById('t5').textContent='✗ FAILED'">
+<div id="t5">loading...</div>
+</div>
+
+<script>
+const HEX='a4a6ad', REG='N822NN';
+
+// Test 1: Planespotters fetch + wsrv.nl proxy
+fetch(`https://api.planespotters.net/pub/photos/hex/${HEX}`)
+  .then(r=>r.json())
+  .then(d=>{
+    const p=d.photos?.[0];
+    document.getElementById('t1').textContent = p ? 'Got JSON! URL: '+p.thumbnail_large?.src : 'No photos in JSON';
+    document.getElementById('t1').className = p ? 'ok' : 'fail';
+    if(p){
+      const rawUrl=(p.thumbnail_large?.src||p.thumbnail?.src||'').replace(/^https?:\/\//,'');
+      const proxied=`https://wsrv.nl/?url=${encodeURIComponent(rawUrl)}&w=640`;
+      document.getElementById('t1').innerHTML += '<br>Proxied: '+proxied;
+      const img=new Image(); img.style.maxWidth='400px';
+      img.onload=()=>{ document.getElementById('t1').appendChild(img); document.getElementById('t1').innerHTML+='<br><span class="ok">IMAGE LOADED!</span>'; }
+      img.onerror=()=>{ document.getElementById('t1').innerHTML+='<br><span class="fail">Image failed: '+proxied+'</span>'; }
+      img.src=proxied;
+    }
+  })
+  .catch(e=>{ document.getElementById('t1').textContent='Fetch failed: '+e; document.getElementById('t1').className='fail'; });
+
+// Test 2: Planespotters fetch + raw CDN URL
+fetch(`https://api.planespotters.net/pub/photos/hex/${HEX}`)
+  .then(r=>r.json())
+  .then(d=>{
+    const p=d.photos?.[0];
+    if(p){
+      const rawUrl=p.thumbnail_large?.src||p.thumbnail?.src;
+      document.getElementById('t2').textContent='Raw CDN URL: '+rawUrl;
+      const img=new Image(); img.style.maxWidth='400px';
+      img.onload=()=>{ document.getElementById('t2').appendChild(img); document.getElementById('t2').innerHTML+='<br><span class="ok">IMAGE LOADED!</span>'; }
+      img.onerror=()=>{ document.getElementById('t2').innerHTML+='<br><span class="fail">Hotlink blocked</span>'; document.getElementById('t2').className='fail';}
+      img.src=rawUrl;
+    }
+  }).catch(e=>{ document.getElementById('t2').textContent='Fetch failed: '+e; document.getElementById('t2').className='fail'; });
+</script>
+</body>
+</html>
