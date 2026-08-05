@@ -94,6 +94,12 @@
   .chip .k{font-size:11px}
   .clockwrap{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
   #clock{font-family:var(--dot);font-weight:var(--w-black);font-size:54px;line-height:1}
+  .wind-widget{display:flex;flex-direction:column;align-items:center;gap:2px;margin-right:10px}
+  .wind-top{display:flex;align-items:center;gap:12px}
+  .wind-spd{font-family:var(--dot);font-weight:var(--w-black);font-size:38px;line-height:1}
+  .wind-unit{font-family:var(--mono);font-size:14px;color:var(--led-dim);margin-left:3px}
+  .wind-bot{font-family:var(--dot);font-weight:var(--w-bold);font-size:22px;display:flex;gap:8px;align-items:center}
+  .wind-sep{color:var(--led-dim)}
   .status{display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.2em}
   .lamp{width:13px;height:13px;border-radius:50%;background:var(--green);box-shadow:0 0 14px var(--green);animation:pulse 2s ease-in-out infinite}
   .status.demo .lamp{background:var(--amber);box-shadow:0 0 14px var(--amber)}
@@ -176,6 +182,22 @@
       <div class="chip"><div class="v glow-amber" id="closest">--</div><div class="k">Closest mi</div></div>
       <div class="chip"><div class="v glow" id="highest">--</div><div class="k">Top alt ft</div></div>
     </div>
+    <div class="wind-widget">
+      <div class="wind-top">
+        <svg id="wind-arrow" viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+          <circle cx="18" cy="18" r="16" fill="none" stroke="#3a382f" stroke-width="1.5"/>
+          <polygon id="wind-ptr" points="18,4 22,28 18,24 14,28" fill="#ffbe4d"
+            style="transform-origin:18px 18px;transition:transform .8s ease"/>
+        </svg>
+        <div class="wind-spd"><span id="w-spd">--</span><span class="wind-unit">mph</span></div>
+      </div>
+      <div class="wind-bot">
+        <span id="w-dir">--</span>
+        <span class="wind-sep">·</span>
+        <span id="w-gust" style="color:var(--led-dim)">gust --mph</span>
+      </div>
+      <div class="k" style="font-size:10px;margin-top:3px;letter-spacing:.2em">SURFACE WIND</div>
+    </div>
     <div class="clockwrap">
       <div id="clock" class="glow">--:--:--</div>
       <div class="status" id="status"><span class="lamp"></span><span id="statusTxt">CONNECTING…</span></div>
@@ -190,7 +212,7 @@
 const CONFIG = {
   lat: 32.604052, lon: -85.490536,   // Auburn University
   radiusMiles: 50,
-  refreshMs: 15000,
+  refreshMs: 8000,
   rotateMs: 30000,
   tickMs: 1000
 };
@@ -297,15 +319,32 @@ async function getRoutes(list){
     }
   }catch(e){}
 }
-async function getPhoto(hex){
-  if(photoCache[hex]!==undefined) return photoCache[hex];
+async function getPhoto(hex, reg, type){
+  const key=hex||reg;
+  if(photoCache[key]!==undefined) return photoCache[key];
+  // 1. Try airframes.io — CORS-friendly, purpose-built for web apps
   try{
-    const res=await fetch(`https://api.planespotters.net/pub/photos/hex/${hex}`,{signal:AbortSignal.timeout(6000)});
-    const data=await res.json();
-    const p=data.photos&&data.photos[0];
-    photoCache[hex]=p?{src:p.thumbnail_large.src,credit:"© "+p.photographer}:null;
-  }catch(e){ photoCache[hex]=null; }
-  return photoCache[hex];
+    const res=await fetch(`https://api.airframes.io/aircraft/${hex}`,
+      {signal:AbortSignal.timeout(6000)});
+    if(res.ok){
+      const d=await res.json();
+      const img=d.image||d.images?.[0];
+      if(img?.url){ photoCache[key]={src:img.url,credit:img.photographer?'© '+img.photographer:'airframes.io'}; return photoCache[key]; }
+    }
+  }catch(e){}
+  // 2. Try Planespotters JSON (works when CORS is allowed, e.g. local / some hosts)
+  try{
+    const res=await fetch(`https://api.planespotters.net/pub/photos/hex/${hex}`,
+      {signal:AbortSignal.timeout(6000)});
+    if(res.ok){
+      const d=await res.json();
+      const p=d.photos?.[0];
+      if(p){ photoCache[key]={src:p.thumbnail_large?.src||p.thumbnail?.src,credit:'© '+p.photographer}; return photoCache[key]; }
+    }
+  }catch(e){}
+  // 3. AvPix open image search as img-tag src (no API key needed)
+  photoCache[key]={src:`https://avpix.com/photo/latest/${hex}`,credit:'avpix.com',imgOnly:true};
+  return photoCache[key];
 }
 
 /* =============== HELPERS =============== */
@@ -393,11 +432,26 @@ function buildHero(f){
       <div class="upnext" id="upnext"><span class="lbl">NEXT UP</span></div>
     </div>`;
 
-  getPhoto(f.hex).then(p=>{
+  getPhoto(f.hex, f.reg, f.type).then(p=>{
     const slot=hero.querySelector(`.photo[data-hex="${f.hex}"]`);
     if(!slot) return;
-    slot.innerHTML=p?`<img src="${p.src}" alt="${typeName}"><div class="credit">${p.credit}</div>`
-                    :`<div class="noimg">${typeName}</div>`;
+    if(!p){ slot.innerHTML=`<div class="noimg">${typeName}</div>`; return; }
+    const img=document.createElement('img');
+    img.alt=typeName;
+    img.src=p.src;
+    img.onerror=()=>{
+      // Planespotters direct embed also failed — try Jetphotos open embed
+      const jp=document.createElement('img');
+      jp.alt=typeName; jp.style.cssText='width:100%;height:100%;object-fit:cover';
+      jp.src=`https://www.jetphotos.com/photo/keyword/${encodeURIComponent(f.reg||typeName)}/0`;
+      jp.onerror=()=>{ slot.innerHTML=`<div class="noimg">${typeName}</div>`; };
+      slot.innerHTML=''; slot.appendChild(jp);
+    };
+    slot.innerHTML='';
+    slot.appendChild(img);
+    const cred=document.createElement('div');
+    cred.className='credit'; cred.textContent=p.credit;
+    slot.appendChild(cred);
   });
   updateTele(f);
   renderUpNext();
@@ -466,6 +520,31 @@ function renderEmpty(){
      <div class="empty"><div class="msg glow">CLEAR SKIES OVER AUBURN<br><span style="font-size:24px;color:var(--led-dim)">no aircraft within ${CONFIG.radiusMiles} miles</span></div></div>`;
 }
 
+/* =============== WIND =============== */
+async function tickWind(){
+  try{
+    const url='https://api.open-meteo.com/v1/forecast'
+      +'?latitude='+CONFIG.lat+'&longitude='+CONFIG.lon
+      +'&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m'
+      +'&wind_speed_unit=mph&timezone=America%2FChicago';
+    const res=await fetch(url,{signal:AbortSignal.timeout(8000)});
+    if(!res.ok) throw new Error('weather '+res.status);
+    const data=await res.json();
+    const c=data.current;
+    const spd=Math.round(c.wind_speed_10m);
+    const gust=Math.round(c.wind_gusts_10m);
+    const deg=Math.round(c.wind_direction_10m);
+    // wind direction = where wind is coming FROM; arrow points where it blows TO
+    document.getElementById('w-spd').textContent=spd;
+    document.getElementById('w-dir').textContent=toWind(deg)+' '+deg+'°';
+    document.getElementById('w-gust').textContent='gust '+gust+'mph';
+    const ptr=document.getElementById('wind-ptr');
+    if(ptr) ptr.style.transform='rotate('+deg+'deg)';
+  }catch(e){
+    // silently keep last known value if fetch fails
+  }
+}
+
 /* =============== LOOPS =============== */
 async function tickData(){
   let list;
@@ -503,9 +582,19 @@ function tickTelemetry(){
   if(!current) return;
   const now=Date.now(), dt=(now-current.lastReal)/1000;
   current.lastReal=now;
+  // dead-reckon hero plane forward
   if(current.gsMph>0){ const d=current.gsMph*(dt/3600); [current.lat,current.lon]=project(current.lat,current.lon,current.track,d); }
   if(current.vrFpm) current.altFt=Math.max(0,(current.altFt||0)+current.vrFpm*(dt/60));
   updateTele(current);
+  // dead-reckon queued planes so next-up distances are live too
+  for(let j=1;j<=3;j++){
+    const qf=flights[(currentIdx+j)%flights.length];
+    if(!qf||!qf.gsMph) continue;
+    const qd=qf.gsMph*(dt/3600);
+    [qf.lat,qf.lon]=project(qf.lat,qf.lon,qf.track||0,qd);
+    if(qf.vrFpm) qf.altFt=Math.max(0,(qf.altFt||0)+qf.vrFpm*(dt/60));
+  }
+  renderUpNext();
 }
 function tickRotate(){ if(flights.length>1) showPlaneAt(currentIdx+1); }
 function tickProgress(){
@@ -518,6 +607,7 @@ function fitStage(){ document.getElementById("stage").style.transform=`scale(${M
 
 fitStage(); addEventListener("resize",fitStage);
 tickClock(); setInterval(tickClock,1000);
+tickWind(); setInterval(tickWind,5*60*1000);  // wind refreshes every 5 min
 tickData(); setInterval(tickData,CONFIG.refreshMs);
 setInterval(tickTelemetry,CONFIG.tickMs);
 setInterval(tickProgress,120);
