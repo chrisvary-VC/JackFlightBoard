@@ -231,6 +231,7 @@ const CONFIG = {
 /* =============== LOOKUPS =============== */
 const AIRLINES = {
   AAL:{n:"American Airlines",i:"AA",c:"#9da6b1"}, SWA:{n:"Southwest",i:"WN",c:"#304cb2"},
+  AUB:{n:"Auburn University",i:"",logo:"assets/auburn-logo.png",c:"#f26522"},
   UAL:{n:"United Airlines",i:"UA",c:"#1414d2"},  DAL:{n:"Delta Air Lines",i:"DL",c:"#98002e"},
   ENY:{n:"Envoy Air",i:"MQ",c:"#5b6770"},        SKW:{n:"SkyWest",i:"OO",c:"#20477d"},
   ASA:{n:"Alaska Airlines",i:"AS",c:"#01426a"},  JBU:{n:"JetBlue",i:"B6",c:"#003876"},
@@ -406,7 +407,7 @@ async function getPhoto(hex, reg, type, callsign){
   // honest livery representation when an exact registration photo is absent.
   const airline=airlineFor(callsign||"");
   const typeName=TYPES[type]||"";
-  if(airline&&typeName){
+  if(airline?.i&&typeName){
     try{
       const livery=await commonsPhoto(`${airline.n} ${typeName}`);
       if(livery){
@@ -441,7 +442,12 @@ async function getPhoto(hex, reg, type, callsign){
 }
 
 /* =============== HELPERS =============== */
-function airlineFor(cs){ const m=cs.match(/^[A-Z]{3}/); return m&&AIRLINES[m[0]]?AIRLINES[m[0]]:null; }
+function airlineFor(cs){
+  const callsign=(cs||"").trim().toUpperCase();
+  if(/^AUB\d+$/.test(callsign)) return AIRLINES.AUB;
+  const m=callsign.match(/^[A-Z]{3}/);
+  return m&&AIRLINES[m[0]]?AIRLINES[m[0]]:null;
+}
 function withDelta(f){ f.dist=distMi(CONFIG.lat,CONFIG.lon,f.lat,f.lon); f.brg=bearing(CONFIG.lat,CONFIG.lon,f.lat,f.lon); return f; }
 function roseSVG(brg){
   const cx=90,cy=90,r=80,px=cx+r*0.8*Math.sin(d2r(brg)),py=cy-r*0.8*Math.cos(d2r(brg));
@@ -462,6 +468,7 @@ function roseSVG(brg){
 const fmt=(n,u="")=>n==null?"———":Math.round(n).toLocaleString()+u;
 function miniLogo(cs){
   const al=airlineFor(cs);
+  if(al?.logo) return `<div class="mlogo"><img src="${al.logo}" alt="${al.n}"></div>`;
   if(al&&al.i) return `<div class="mlogo"><img src="https://www.gstatic.com/flights/airline_logos/70px/${al.i}.png" onerror="this.outerHTML='<div class=fb>${al.i}</div>'"></div>`;
   return `<div class="mlogo"><div class="fb dot">✈</div></div>`;
 }
@@ -476,7 +483,7 @@ function buildHero(f){
   const al=f.airline||airlineFor(f.callsign);
   const tile=al
     ? `<div class="logo-tile" style="--tilebg:${al.c}22">
-         <img src="https://www.gstatic.com/flights/airline_logos/70px/${al.i}.png" alt="${al.n}"
+         <img src="${al.logo||`https://www.gstatic.com/flights/airline_logos/70px/${al.i}.png`}" alt="${al.n}"
               onerror="this.outerHTML='<div class=fallback dot>${al.i}</div>'"></div>`
     : `<div class="logo-tile"><div class="fallback dot glow">✈</div></div>`;
   const typeName=TYPES[f.type]||f.type||"Type not broadcast";
