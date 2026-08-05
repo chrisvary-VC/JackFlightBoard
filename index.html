@@ -200,25 +200,34 @@
 
   /* data strip */
   .strip{background:var(--panel);border:1px solid #1e2124;border-radius:12px;
-    display:grid;grid-template-columns:400px 320px 740px;column-gap:54px;justify-content:center;padding:20px 32px;align-items:center;position:relative;overflow:hidden}
+    display:grid;grid-template-columns:660px 290px 640px;column-gap:42px;justify-content:center;padding:20px 28px;align-items:center;position:relative;overflow:hidden}
   .strip .led-bg{border-radius:12px}
-  .map-panel{height:272px;position:relative;z-index:2;border:1px solid #292c2f;border-radius:10px;overflow:hidden;background:#090b0c}
-  .map-title{position:absolute;z-index:500;left:10px;top:9px;padding:5px 8px;border-radius:4px;background:rgba(5,7,8,.78);font-size:9px;letter-spacing:.18em;color:var(--amber);pointer-events:none}
-  #flight-map{width:100%;height:100%;background:#0b0d0e}
-  #flight-map .leaflet-tile-pane{filter:grayscale(.78) invert(.91) hue-rotate(155deg) brightness(.48) contrast(1.25)}
-  #flight-map .leaflet-control-attribution{font-family:var(--mono);font-size:8px;background:rgba(5,7,8,.72);color:#aaa}
-  #flight-map .leaflet-control-attribution a{color:#d8d3c6}
+  .map-panel{height:294px;position:relative;z-index:2;border:1px solid rgba(67,124,184,.7);border-radius:10px;overflow:hidden;background:#03244d;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 0 18px rgba(3,36,77,.48)}
+  .map-title,.map-readout{position:absolute;z-index:700;top:10px;padding:7px 10px;border:1px solid rgba(255,190,77,.2);border-radius:4px;background:rgba(3,20,42,.92);font-size:11px;letter-spacing:.15em;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+  .map-title{left:10px;color:var(--amber)}
+  .map-readout{right:10px;color:#f6f3e8;letter-spacing:.1em}
+  #flight-map{width:100%;height:100%;background:#03244d}
+  #flight-map .map-base-tiles{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(165deg) brightness(2.15) contrast(1.34);opacity:.92!important}
+  #flight-map .map-label-tiles{filter:grayscale(1) brightness(2.5) contrast(1.42);opacity:1!important}
+  #flight-map .leaflet-control-attribution{font-family:var(--mono);font-size:9px;background:rgba(3,20,42,.9);color:#c8d3df;padding:3px 6px;border-radius:3px 0 0 0}
+  #flight-map .leaflet-control-attribution a{color:#ece8dc}
+  #flight-map .leaflet-tooltip{box-shadow:none}
+  #flight-map .leaflet-tooltip::before{display:none}
+  #flight-map .map-place-label,#flight-map .map-aircraft-label{border:1px solid rgba(242,101,34,.58);border-radius:4px;background:rgba(3,36,77,.94);font-family:var(--mono);font-weight:900;letter-spacing:.07em;text-shadow:0 1px 2px #000,1px 0 2px #000,-1px 0 2px #000;padding:5px 8px}
+  #flight-map .map-place-label{color:#fff;font-size:13px}
+  #flight-map .map-aircraft-label{color:#ff9a56;font-size:12px}
   .map-plane-icon{background:transparent;border:0}
-  .map-plane-icon span{display:block;color:var(--amber);font-family:var(--dot);font-size:30px;line-height:30px;text-shadow:0 0 3px #050708,0 0 12px rgba(255,190,77,.95);transform-origin:50% 50%}
+  .map-plane-icon::before{content:"";position:absolute;width:44px;height:44px;left:-3px;top:-3px;border:1px solid rgba(255,190,77,.36);border-radius:50%;box-shadow:0 0 12px rgba(255,190,77,.22)}
+  .map-plane-icon span{display:block;color:var(--amber);font-family:var(--dot);font-size:38px;line-height:38px;-webkit-text-stroke:1.5px #07090a;text-shadow:0 0 8px rgba(255,190,77,.72);transform-origin:50% 50%}
   .map-fallback{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--dot);font-size:18px;color:var(--led-dim);line-height:1.5}
-  .look{width:320px;display:flex;align-items:center;justify-content:center}
+  .look{width:290px;display:flex;align-items:center;justify-content:center}
   .rose{width:200px;height:200px}
   .look .big{display:flex;flex-direction:column;gap:20px}
   .look .dist{font-family:var(--dot);font-weight:var(--w-black);font-size:108px;line-height:.78;color:var(--amber);white-space:nowrap;font-variant-numeric:tabular-nums}
   .look .dist small{font-size:38px;font-weight:var(--w-bold)}
   .look .dir{font-family:var(--dot);font-weight:var(--w-black);font-size:54px;line-height:.9;white-space:nowrap;font-variant-numeric:tabular-nums}
   .look .k{font-size:12px;margin-top:8px}
-  .tele{width:740px;justify-self:center;display:grid;grid-template-columns:repeat(2,330px);grid-template-rows:repeat(2,1fr);column-gap:80px;row-gap:26px;align-content:center}
+  .tele{width:640px;justify-self:center;display:grid;grid-template-columns:repeat(2,290px);grid-template-rows:repeat(2,1fr);column-gap:60px;row-gap:26px;align-content:center}
   .tele .cell{display:flex;flex-direction:column;gap:6px}
   .tele .cell .k{font-size:12px}
   .tele .v{font-family:var(--dot);font-weight:var(--w-black);font-size:52px;line-height:.85;transition:color .25s;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -384,7 +393,7 @@ const toWind=b=>WINDS[Math.round(b/22.5)%16];
 let flights=[], current=null, currentIdx=0, demoMode=false, rotateStart=Date.now(), flightAwareCache={}, transitioning=false;
 let towerAudio=null, towerWanted=false;
 let tigerEyeTimer=null;
-let miniMap=null, miniMapPlane=null, miniMapLine=null;
+let miniMap=null, miniMapPlane=null, miniMapLine=null, miniMapLineCasing=null;
 const PHOTO_CACHE_KEY="jacks-flightboard-photo-cache-v1";
 const PHOTO_CACHE_TTL=30*24*60*60*1000;
 const photoMisses=new Set(), routeCache={}, aircraftCache={};
@@ -625,7 +634,7 @@ function miniLogo(cs){
 /* =============== LIVE MAP =============== */
 function disposeFlightMap(){
   if(miniMap){ miniMap.remove(); miniMap=null; }
-  miniMapPlane=null; miniMapLine=null;
+  miniMapPlane=null; miniMapLine=null; miniMapLineCasing=null;
 }
 function initFlightMap(f){
   const node=document.getElementById("flight-map"); if(!node) return;
@@ -635,22 +644,39 @@ function initFlightMap(f){
   }
   const L=window.L;
   miniMap=L.map(node,{zoomControl:false,attributionControl:true,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false,fadeAnimation:false,zoomAnimation:false,markerZoomAnimation:false});
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
+  miniMap.createPane("mapLabels");
+  miniMap.getPane("mapLabels").style.zIndex="450";
+  miniMap.getPane("mapLabels").style.pointerEvents="none";
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",{
     maxZoom:19,
+    subdomains:"abcd",
+    className:"map-base-tiles",
     updateWhenIdle:true,
     keepBuffer:1,
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>'
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>'
   }).addTo(miniMap);
-  L.circleMarker([CONFIG.lat,CONFIG.lon],{radius:5,color:"#f26522",weight:2,fillColor:"#03244d",fillOpacity:1,interactive:false}).addTo(miniMap);
-  miniMapLine=L.polyline([[CONFIG.lat,CONFIG.lon],[f.lat,f.lon]],{color:"#ffbe4d",weight:2,opacity:.68,dashArray:"3 7",interactive:false}).addTo(miniMap);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",{
+    pane:"mapLabels",
+    maxZoom:19,
+    subdomains:"abcd",
+    className:"map-label-tiles",
+    updateWhenIdle:true,
+    keepBuffer:1
+  }).addTo(miniMap);
+  L.circleMarker([CONFIG.lat,CONFIG.lon],{radius:7,color:"#f26522",weight:3,fillColor:"#03244d",fillOpacity:1,interactive:false})
+    .bindTooltip("AUBURN",{permanent:true,direction:"right",offset:[10,0],className:"map-place-label"}).addTo(miniMap);
+  miniMapLineCasing=L.polyline([[CONFIG.lat,CONFIG.lon],[f.lat,f.lon]],{color:"#07090a",weight:8,opacity:.78,dashArray:"10 7",interactive:false}).addTo(miniMap);
+  miniMapLine=L.polyline([[CONFIG.lat,CONFIG.lon],[f.lat,f.lon]],{color:"#ffbe4d",weight:3,opacity:.92,dashArray:"10 7",interactive:false}).addTo(miniMap);
   const icon=L.divIcon({
     className:"map-plane-icon",
     html:`<span style="transform:rotate(${Math.round(f.track||0)}deg)">✈</span>`,
-    iconSize:[30,30],iconAnchor:[15,15]
+    iconSize:[38,38],iconAnchor:[19,19]
   });
-  miniMapPlane=L.marker([f.lat,f.lon],{icon,interactive:false}).addTo(miniMap);
+  const aircraftMapLabel=`${f.orig?.code?`${f.orig.code} → `:""}${f.callsign}`;
+  miniMapPlane=L.marker([f.lat,f.lon],{icon,interactive:false})
+    .bindTooltip(aircraftMapLabel,{permanent:true,direction:"top",offset:[0,-20],className:"map-aircraft-label"}).addTo(miniMap);
   const bounds=L.latLngBounds([[CONFIG.lat,CONFIG.lon],[f.lat,f.lon]]);
-  if(bounds.isValid()&&distMi(CONFIG.lat,CONFIG.lon,f.lat,f.lon)>.15) miniMap.fitBounds(bounds,{padding:[42,42],maxZoom:13,animate:false});
+  if(bounds.isValid()&&distMi(CONFIG.lat,CONFIG.lon,f.lat,f.lon)>.15) miniMap.fitBounds(bounds,{padding:[64,64],maxZoom:13,animate:false});
   else miniMap.setView([CONFIG.lat,CONFIG.lon],13,{animate:false});
   setTimeout(()=>miniMap?.invalidateSize(false),0);
 }
@@ -658,8 +684,12 @@ function updateFlightMap(f){
   if(miniMapPlane){
     miniMapPlane.setLatLng([f.lat,f.lon]);
     miniMapLine?.setLatLngs([[CONFIG.lat,CONFIG.lon],[f.lat,f.lon]]);
+    miniMapLineCasing?.setLatLngs([[CONFIG.lat,CONFIG.lon],[f.lat,f.lon]]);
+    miniMapPlane.setTooltipContent(`${f.orig?.code?`${f.orig.code} → `:""}${f.callsign}`);
     const glyph=miniMapPlane.getElement()?.querySelector("span");
     if(glyph) glyph.style.transform=`rotate(${Math.round(f.track||0)}deg)`;
+    const readout=document.getElementById("map-readout");
+    if(readout) readout.textContent=`${f.dist.toFixed(1)} MI · ${toWind(f.brg)} ${Math.round(f.brg)}°`;
     return;
   }
   const fallback=document.querySelector("#flight-map .map-fallback");
@@ -715,6 +745,7 @@ function buildHero(f){
       <div class="led-bg"></div>
       <div class="map-panel">
         <div class="map-title k">APPROX. LIVE POSITION</div>
+        <div class="map-readout k" id="map-readout">${f.dist.toFixed(1)} MI · ${toWind(f.brg)} ${Math.round(f.brg)}°</div>
         <div id="flight-map" role="img" aria-label="Map showing the aircraft's approximate live position near Auburn"></div>
       </div>
       <div class="look">
