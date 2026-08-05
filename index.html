@@ -223,7 +223,7 @@ const CONFIG = {
   lat: 32.604052, lon: -85.490536,   // Auburn University
   radiusMiles: 50,
   refreshMs: 8000,
-  rotateMs: 10000,
+  rotateMs: 30000,
   tickMs: 1000
 };
 
@@ -416,6 +416,19 @@ async function getPhoto(hex, reg, type, callsign){
     }catch(e){}
   }
 
+  // A real type reference is especially useful for private aircraft, which
+  // often have no registration photo and no airline livery to fall back to.
+  if(typeName){
+    try{
+      const typePhoto=await commonsPhoto(typeName,typeName);
+      if(typePhoto){
+        const photo={...typePhoto,credit:`${typeName} reference · Wikimedia Commons`,exact:false,livery:false,reference:true};
+        photoCache[key]=photo;
+        return photo;
+      }
+    }catch(e){}
+  }
+
   // Private and rarely photographed aircraft keep a neutral type silhouette.
   const fallback={
     src:TYPE_IMGS[type]||TYPE_IMGS.DEFAULT,
@@ -542,10 +555,10 @@ function buildHero(f){
     if(p.link){ credit.href=p.link; credit.target="_blank"; credit.rel="noopener noreferrer"; }
     slot.appendChild(credit);
 
-    if(p.exact||p.livery){
+    if(p.exact||p.livery||p.reference){
       const badge=document.createElement("div");
       badge.className="photo-badge";
-      badge.textContent=p.exact?"Exact aircraft":"Matching livery";
+      badge.textContent=p.exact?"Exact aircraft":p.livery?"Matching livery":"Reference type";
       slot.appendChild(badge);
     }
   });
@@ -564,14 +577,14 @@ function updateRouteProgress(f){
   if(label) label.textContent=`APPROX. ${progress}% COMPLETE`;
 }
 
-/* the four upcoming planes in the rotation, small format */
+/* the three upcoming planes in the rotation, small format */
 function renderUpNext(){
   const wrap=document.getElementById("upnext"); if(!wrap) return;
   let html=`<span class="lbl">NEXT UP</span>`;
   if(flights.length<=1){
     html+=`<div class="mini"><div class="mtxt"><div class="mcall" style="color:var(--led-dim);font-size:18px">SOLO IN THE SKY</div><div class="mmeta">no other traffic in range</div></div></div>`;
   }else{
-    for(let j=1;j<=4;j++){
+    for(let j=1;j<=3;j++){
       const f=flights[(currentIdx+j)%flights.length];
       if(!f) break;
       withDelta(f);
@@ -698,7 +711,7 @@ function tickTelemetry(){
   updateTele(current);
   updateRouteProgress(current);
   // dead-reckon queued planes so next-up distances are live too
-  for(let j=1;j<=4;j++){
+  for(let j=1;j<=3;j++){
     const qf=flights[(currentIdx+j)%flights.length];
     if(!qf||!qf.gsMph) continue;
     const qd=qf.gsMph*(dt/3600);
