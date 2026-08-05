@@ -110,24 +110,28 @@
 
   /* ---------- aircraft changeover ---------- */
   .plane-transition{
-    position:absolute;z-index:30;left:0;top:44%;width:100%;height:130px;
-    pointer-events:none;overflow:visible;animation:flyThrough 1.05s cubic-bezier(.3,.02,.68,.99) both;
+    position:absolute;z-index:30;left:-620px;top:300px;width:600px;height:340px;
+    pointer-events:none;overflow:visible;animation:flyThrough 1.3s cubic-bezier(.28,.02,.66,.98) both;
   }
   .plane-transition::before{
-    content:"";position:absolute;left:-420px;top:69px;width:390px;height:3px;
-    background:linear-gradient(90deg,transparent,rgba(255,190,77,.08),rgba(255,190,77,.7));
-    box-shadow:0 0 14px rgba(255,190,77,.45);
+    content:"";position:absolute;z-index:-1;left:-500px;top:190px;width:560px;height:2px;
+    background:linear-gradient(90deg,transparent,rgba(242,101,34,.1),rgba(242,101,34,.72));
+    box-shadow:0 0 8px rgba(242,101,34,.28);
   }
   .plane-transition .fly-plane{
-    display:block;position:absolute;left:-180px;top:0;color:var(--amber);
-    font-family:var(--dot);font-size:118px;line-height:1;text-shadow:0 0 22px rgba(255,190,77,.65);
+    display:block;position:absolute;left:0;top:0;width:590px;height:auto;
+    filter:drop-shadow(0 18px 16px rgba(0,0,0,.58));
   }
+  .fly-light{position:absolute;width:7px;height:7px;border-radius:50%;animation:navBlink .42s ease-in-out infinite alternate}
+  .fly-light.port{left:56px;top:121px;background:#ff554e;box-shadow:0 0 13px #ff554e}
+  .fly-light.starboard{right:51px;top:100px;background:#69ffab;box-shadow:0 0 13px #69ffab}
+  @keyframes navBlink{from{opacity:.35}to{opacity:1}}
   @keyframes flyThrough{
-    0%{transform:translate3d(-80px,70px,0) scale(.72);opacity:0}
-    12%{opacity:1}
-    52%{transform:translate3d(1060px,-10px,0) scale(1);opacity:1}
-    88%{opacity:1}
-    100%{transform:translate3d(2250px,-105px,0) scale(1.18);opacity:0}
+    0%{transform:translate3d(0,150px,0) rotate(-1deg) scale(.9);opacity:0}
+    10%{opacity:1}
+    50%{transform:translate3d(1300px,0,0) rotate(-1.5deg) scale(.98);opacity:1}
+    90%{opacity:1}
+    100%{transform:translate3d(2660px,-140px,0) rotate(-2deg) scale(1.08);opacity:0}
   }
 
   /* ---------- HERO plane board ---------- */
@@ -149,19 +153,21 @@
   .idcol .airline{font-family:var(--dot);font-weight:var(--w-black);font-size:62px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .idcol .callsign{font-family:var(--dot);font-weight:var(--w-bold);font-size:40px;color:var(--amber);line-height:1}
   .idcol .type{font-family:var(--dot);font-weight:var(--w-bold);font-size:38px;line-height:1}
-  .route{margin-top:24px;transform:translateY(12px);width:100%;max-width:760px}
-  .route-card{display:grid;grid-template-columns:minmax(0,1fr) 350px minmax(0,1fr);gap:20px;align-items:center;width:100%}
+  .route{margin-top:4px;width:100%;max-width:760px;min-height:112px;padding:12px 14px;border-radius:10px;background:linear-gradient(90deg,rgba(5,7,8,.68),rgba(5,7,8,.46),rgba(5,7,8,.68));border:1px solid rgba(255,190,77,.1)}
+  .route-card{display:grid;grid-template-columns:124px minmax(400px,1fr) 124px;gap:16px;align-items:center;width:100%;min-height:86px}
   .route-stop:last-child{text-align:right}
-  .route-stop .code{font-family:var(--dot);font-weight:var(--w-black);font-size:38px;line-height:.9}
-  .route-stop .city{font-size:9px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--led-dim)}
-  .route-label{font-size:7px;letter-spacing:.18em;margin-bottom:5px;color:var(--amber)}
-  .route-track{position:relative;height:58px;margin-top:5px}
+  .route-stop .code{font-family:var(--dot);font-weight:var(--w-black);font-size:44px;line-height:.9}
+  .route-stop .city{font-size:10px;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--led-dim)}
+  .route-label{font-size:9px;letter-spacing:.18em;margin-bottom:6px;color:var(--amber)}
+  .route-track{position:relative;height:84px}
   .route-arc{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-  .route-arc path{fill:none;stroke:var(--amber);stroke-width:2;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(255,190,77,.5))}
-  .route-arc circle{fill:var(--amber);filter:drop-shadow(0 0 5px rgba(255,190,77,.8))}
-  .route-plane{position:absolute;z-index:1;left:calc(var(--progress) * 1%);top:var(--plane-y);transform:translate(-50%,-50%);font-family:var(--dot);font-size:21px;color:var(--amber);line-height:1;text-shadow:0 0 14px rgba(255,190,77,.8)}
-  .route-progress{position:absolute;left:0;top:51px;font-size:7px;letter-spacing:.14em;color:var(--led-dim);white-space:nowrap}
-  .route-pending{font-family:var(--dot);font-weight:var(--w-black);font-size:42px;color:var(--led-dim)}
+  .route-arc path{fill:none;stroke:var(--amber);stroke-width:4;stroke-linecap:round;filter:drop-shadow(0 0 6px rgba(255,190,77,.55))}
+  .route-arc circle{fill:var(--amber);filter:drop-shadow(0 0 6px rgba(255,190,77,.85))}
+  .route-plane{position:absolute;z-index:1;left:calc(var(--progress) * 1%);top:var(--plane-y);transform:translate(-50%,-50%);font-family:var(--dot);font-size:34px;color:var(--amber);line-height:1;text-shadow:0 0 2px var(--board),0 0 10px rgba(255,190,77,.85)}
+  .route-progress{position:absolute;left:50%;top:74px;transform:translateX(-50%);font-size:9px;letter-spacing:.14em;color:var(--led-dim);white-space:nowrap}
+  .route-pending{min-height:86px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
+  .route-pending .pending-title{font-family:var(--dot);font-weight:var(--w-black);font-size:34px;color:var(--led-dim)}
+  .route-pending .pending-meta{font-size:9px;letter-spacing:.18em;color:var(--led-dim)}
 
   /* data strip */
   .strip{background:var(--panel);border:1px solid #1e2124;border-radius:12px;
@@ -189,16 +195,20 @@
   .rot .idx{font-family:var(--dot);font-weight:var(--w-bold);font-size:24px;color:var(--led-dim);white-space:nowrap}
   .rot .bar{flex:1;height:9px;border-radius:6px;background:#1a1d20;overflow:hidden}
   .rot .fill{height:100%;width:0;background:linear-gradient(90deg,var(--amber),#ffd98a);box-shadow:0 0 12px var(--amber)}
-  .upnext{display:flex;align-items:center;gap:10px}
-  .upnext .lbl{font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.22em;color:var(--led-dim);white-space:nowrap}
-  .mini{flex:1;display:flex;align-items:center;gap:9px;background:#0d0f11;border:1px solid #1e2124;border-radius:9px;padding:8px 10px;min-width:0}
-  .mini .mlogo{width:38px;height:38px;border-radius:6px;background:#20242e;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
+  .upnext{display:flex;align-items:center;gap:8px}
+  .upnext .lbl{width:82px;flex:0 0 82px;font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.22em;color:var(--led-dim);white-space:nowrap}
+  .mini{flex:1;height:66px;display:flex;align-items:center;gap:8px;background:#0d0f11;border:1px solid #1e2124;border-radius:9px;padding:7px 9px;min-width:0}
+  .mini .mlogo{width:36px;height:36px;border-radius:6px;background:#20242e;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
   .mini .mlogo img{width:76%;height:76%;object-fit:contain}
   .mini .mlogo .fb{font-family:var(--dot);font-weight:800;font-size:18px}
   .mini .mtxt{min-width:0}
-  .mini .mcall{font-family:var(--dot);font-weight:800;font-size:20px;line-height:1;color:var(--led);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mini .mmeta{font-family:var(--mono);font-size:11px;color:var(--led-dim);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mini .mdist{margin-left:auto;font-family:var(--dot);font-weight:800;font-size:22px;color:var(--amber);white-space:nowrap;flex:0 0 auto}
+  .mini .mcall{font-family:var(--dot);font-weight:800;font-size:18px;line-height:1;color:var(--led);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .mroute{font-family:var(--dot);font-weight:700;font-size:13px;line-height:1;color:var(--amber);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .mmeta{font-family:var(--mono);font-size:9px;color:var(--led-dim);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .mdist{margin-left:auto;font-family:var(--dot);font-weight:800;font-size:18px;color:var(--amber);white-space:nowrap;flex:0 0 auto}
+  .mini-empty{border-style:dashed;background:rgba(13,15,17,.55);opacity:.58}
+  .mini-empty .empty-radar{width:28px;flex:0 0 28px;text-align:center;font-size:20px;color:var(--led-dim)}
+  .mini-empty .mroute{color:var(--led-dim);font-size:11px}
 
   .empty{grid-row:1 / -1;display:flex;align-items:center;justify-content:center}
   .empty .msg{font-family:var(--dot);font-weight:var(--w-bold);font-size:44px;color:var(--led-dim);text-align:center;line-height:1.3}
@@ -289,6 +299,7 @@ const TYPES = {
 };
 const WINDS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
 const AUBURN_SKYHAWK_PHOTO="assets/auburn-skyhawk.png";
+const AUBURN_TRANSITION_PLANE="assets/auburn-transition-plane.png";
 
 /* =============== MATH =============== */
 const R_MI=3958.8, d2r=d=>d*Math.PI/180, r2d=r=>r*180/Math.PI;
@@ -532,7 +543,7 @@ function miniLogo(cs){
 /* =============== RENDER =============== */
 function routeArcY(progress){
   const t=progress/100;
-  return 42-48*t*(1-t);
+  return 54-88*t*(1-t);
 }
 function buildHero(f){
   withDelta(f);
@@ -549,11 +560,11 @@ function buildHero(f){
   const routeY=routeArcY(routeProgress);
   const routeHTML=f.orig&&f.dest
     ? `<div class="route-card">
-         <div class="route-stop"><div class="route-label k">DEPARTED</div><div class="code glow">${f.orig.code}</div><div class="city k">${f.orig.city||""}</div></div>
-         <div class="route-track" id="route-track" style="--progress:${routeProgress};--plane-y:${routeY}px"><svg class="route-arc" viewBox="0 0 350 58" preserveAspectRatio="none" aria-hidden="true"><path d="M 0 42 Q 175 18 350 42"/><circle cx="350" cy="42" r="4"/></svg><span class="route-plane">✈</span><span class="route-progress k" id="route-progress">APPROX. ${routeProgress}% COMPLETE</span></div>
-         <div class="route-stop"><div class="route-label k">ARRIVING</div><div class="code glow">${f.dest.code}</div><div class="city k">${f.dest.city||""}</div></div>
+         <div class="route-stop"><div class="route-label k">ORIGIN</div><div class="code glow">${f.orig.code}</div><div class="city k">${f.orig.city||""}</div></div>
+         <div class="route-track" id="route-track" style="--progress:${routeProgress};--plane-y:${routeY}px"><svg class="route-arc" viewBox="0 0 420 84" preserveAspectRatio="none" aria-hidden="true"><path d="M 4 54 Q 210 8 416 54"/><circle cx="4" cy="54" r="5"/><circle cx="416" cy="54" r="5"/></svg><span class="route-plane">✈</span><span class="route-progress k" id="route-progress">APPROX. ${routeProgress}% COMPLETE</span></div>
+         <div class="route-stop"><div class="route-label k">DESTINATION</div><div class="code glow">${f.dest.code}</div><div class="city k">${f.dest.city||""}</div></div>
        </div>`
-    : `<div class="route-pending glow">ROUTE PENDING</div>`;
+    : `<div class="route-pending"><div class="pending-title glow">ROUTE NOT PUBLISHED</div><div class="pending-meta k">${f.callsign} · ${typeName}</div></div>`;
 
   const hero=document.getElementById("hero");
   hero.innerHTML=`
@@ -653,21 +664,31 @@ function updateRouteProgress(f){
 function renderUpNext(){
   const wrap=document.getElementById("upnext"); if(!wrap) return;
   let html=`<span class="lbl">NEXT UP</span>`;
-  if(flights.length<=1){
-    html+=`<div class="mini"><div class="mtxt"><div class="mcall" style="color:var(--led-dim);font-size:18px">SOLO IN THE SKY</div><div class="mmeta">no other traffic in range</div></div></div>`;
-  }else{
-    const upcoming=Math.min(5,flights.length-1);
-    for(let j=1;j<=upcoming;j++){
+  const upcoming=Math.min(5,Math.max(0,flights.length-1));
+  for(let j=1;j<=5;j++){
+    if(j<=upcoming){
       const f=flights[(currentIdx+j)%flights.length];
-      if(!f) break;
       withDelta(f);
+      const route=f.orig?.code&&f.dest?.code
+        ? `${f.orig.code} → ${f.dest.code}`
+        : isAuburnCallsign(f.callsign)?"LOCAL TRAINING":"ROUTE NOT PUBLISHED";
       html+=`<div class="mini">
         ${miniLogo(f.callsign)}
         <div class="mtxt">
           <div class="mcall">${f.callsign}</div>
+          <div class="mroute">${route}</div>
           <div class="mmeta">${TYPES[f.type]||f.type||"—"} · ${toWind(f.brg)} ${Math.round(f.brg)}°</div>
         </div>
-        <div class="mdist">${f.dist.toFixed(0)}<span style="font-size:14px">mi</span></div>
+        <div class="mdist">${f.dist.toFixed(0)}<span style="font-size:11px">mi</span></div>
+      </div>`;
+    }else{
+      html+=`<div class="mini mini-empty">
+        <div class="empty-radar dot">·</div>
+        <div class="mtxt">
+          <div class="mcall">OPEN SKY</div>
+          <div class="mroute">AWAITING TRAFFIC</div>
+          <div class="mmeta">WITHIN ${CONFIG.radiusMiles} MI</div>
+        </div>
       </div>`;
     }
   }
@@ -714,17 +735,23 @@ function flyToPlane(i){
   const flyby=document.createElement("div");
   flyby.className="plane-transition";
   flyby.setAttribute("aria-hidden","true");
-  const plane=document.createElement("span");
+  const plane=document.createElement("img");
   plane.className="fly-plane";
-  plane.textContent="✈";
+  plane.src=AUBURN_TRANSITION_PLANE;
+  plane.alt="";
   flyby.appendChild(plane);
+  for(const side of ["port","starboard"]){
+    const light=document.createElement("span");
+    light.className=`fly-light ${side}`;
+    flyby.appendChild(light);
+  }
   document.getElementById("stage").appendChild(flyby);
 
   let swapped=false;
   const swap=()=>{ if(!swapped){ swapped=true; showPlaneAt(i); } };
   const cleanup=()=>{ swap(); flyby.remove(); transitioning=false; };
-  setTimeout(swap,500);
-  const fallback=setTimeout(cleanup,1400);
+  setTimeout(swap,650);
+  const fallback=setTimeout(cleanup,1650);
   flyby.addEventListener("animationend",()=>{ clearTimeout(fallback); cleanup(); },{once:true});
 }
 function renderEmpty(){
@@ -824,6 +851,7 @@ function tickClock(){ document.getElementById("clock").textContent=new Date().to
 function fitStage(){ document.getElementById("stage").style.transform=`scale(${Math.min(innerWidth/1920,innerHeight/1080)})`; }
 
 async function startBoard(){
+  const transitionPreload=new Image(); transitionPreload.src=AUBURN_TRANSITION_PLANE;
   await loadFlightAwareCache();
   fitStage(); addEventListener("resize",fitStage);
   tickClock(); setInterval(tickClock,1000);
