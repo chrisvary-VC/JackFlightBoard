@@ -233,6 +233,10 @@
   .rot .idx{font-family:var(--dot);font-weight:var(--w-bold);font-size:24px;color:var(--led-dim);white-space:nowrap}
   .rot .bar{flex:1;height:9px;border-radius:6px;background:#1a1d20;overflow:hidden}
   .rot .fill{height:100%;width:0;background:linear-gradient(90deg,var(--amber),#ffd98a);box-shadow:0 0 12px var(--amber)}
+  .builder-credit{height:28px;display:flex;align-items:center;gap:7px;flex:0 0 auto;color:var(--led-dim);font-family:var(--mono);font-size:9px;letter-spacing:.08em;white-space:nowrap;opacity:.72}
+  .builder-credit img{width:34px;height:24px;object-fit:contain;filter:drop-shadow(0 0 5px rgba(0,133,255,.28))}
+  .builder-credit strong{color:var(--led);font-weight:600}
+  .builder-empty{position:absolute;right:22px;bottom:18px;z-index:5}
   .upnext{display:flex;align-items:center;gap:8px}
   .upnext .lbl{width:82px;flex:0 0 82px;font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.22em;color:var(--led-dim);white-space:nowrap}
   .mini{flex:1;height:66px;display:flex;align-items:center;gap:8px;background:#0d0f11;border:1px solid #1e2124;border-radius:9px;padding:7px 9px;min-width:0}
@@ -731,6 +735,7 @@ function buildHero(f){
       <div class="top">
         <div class="idx" id="rotIdx">PLANE — OF —</div>
         <div class="bar"><div class="fill" id="rotFill"></div></div>
+        <div class="builder-credit"><img src="assets/vary-creative-logo.png" alt="Vary Creative logo"><span>Built by <strong>Vary Creative</strong></span></div>
       </div>
       <div class="upnext" id="upnext"><span class="lbl">NEXT UP</span></div>
     </div>`;
@@ -744,13 +749,8 @@ function buildHero(f){
     const img=document.createElement("img");
     img.src=p.src;
     img.alt=p.fallback?"Auburn aviation fleet":f.reg?`${typeName}, registration ${f.reg}`:typeName;
-    if(p.fallback){
-      img.style.objectFit="cover";
-    }else if(!p.exact&&!p.auburn){
-      img.style.objectFit="contain";
-      img.style.padding="20px";
-      img.style.filter="drop-shadow(0 4px 24px rgba(0,0,0,.7))";
-    }
+    img.style.objectFit="cover";
+    img.style.objectPosition="center center";
     img.addEventListener("error",()=>{
       img.src=NO_PLANE_FALLBACK;
       img.alt="Auburn aviation fleet";
@@ -892,7 +892,8 @@ function renderEmpty(){
   disposeFlightMap();
   document.getElementById("hero").innerHTML=
     `<div class="led-bg"></div><div class="sheen"></div><div class="mascot"></div>
-     <div class="empty"><div class="msg glow">CLEAR SKIES OVER AUBURN<br><span style="font-size:24px;color:var(--led-dim)">no aircraft within ${CONFIG.radiusMiles} miles</span></div></div>`;
+     <div class="empty"><div class="msg glow">CLEAR SKIES OVER AUBURN<br><span style="font-size:24px;color:var(--led-dim)">no aircraft within ${CONFIG.radiusMiles} miles</span></div></div>
+     <div class="builder-credit builder-empty"><img src="assets/vary-creative-logo.png" alt="Vary Creative logo"><span>Built by <strong>Vary Creative</strong></span></div>`;
 }
 
 /* =============== WIND =============== */
