@@ -282,7 +282,7 @@ const toWind=b=>WINDS[Math.round(b/22.5)%16];
 
 /* =============== STATE =============== */
 let flights=[], current=null, currentIdx=0, demoMode=false, rotateStart=Date.now();
-const photoCache={}, routeCache={};
+const photoCache={}, routeCache={}, aircraftCache={};
 
 // Safari versions used by some smart displays do not implement
 // AbortSignal.timeout(). Use a standard AbortController instead so the live
@@ -319,6 +319,22 @@ async function fetchFlights(){
     };
   }).filter(f=>f.altFt!==0);
 }
+async function enrichAircraftDetails(list){
+  await Promise.all(list.map(async f=>{
+    const key=(f.reg||f.hex||"").toUpperCase();
+    if(!key) return;
+    if(aircraftCache[key]===undefined){
+      try{
+        const res=await timedFetch(`https://api.adsbdb.com/v0/aircraft/${encodeURIComponent(key)}`,{},6000);
+        aircraftCache[key]=res.ok?(await res.json()).response?.aircraft||null:null;
+      }catch(e){ aircraftCache[key]=null; }
+    }
+    const aircraft=aircraftCache[key];
+    if(!aircraft) return;
+    if(!f.reg&&aircraft.registration) f.reg=aircraft.registration;
+    if(!f.type&&aircraft.icao_type) f.type=aircraft.icao_type.toUpperCase();
+  }));
+}
 const DEMO=[
   {hex:"a1b2c3",callsign:"DAL1902",reg:"N512DN",type:"A21N",lat:32.86,lon:-85.66,altFt:33800,gsMph:534,track:248,vrFpm:0},
   {hex:"d4e5f6",callsign:"AAL2210",reg:"N822NN",type:"B738",lat:32.44,lon:-85.28,altFt:14200,gsMph:372,track:58,vrFpm:1720},
@@ -339,6 +355,7 @@ async function getRoutes(list){
     }
     const route=routeCache[callsign];
     if(!route) return;
+    f.airline=route.airline?{n:route.airline.name,i:route.airline.iata||route.airline.icao||"",c:"#9da6b1"}:null;
     f.route=`${route.origin.iata_code||route.origin.icao_code} – ${route.destination.iata_code||route.destination.icao_code}`;
     f.orig={code:route.origin.iata_code||route.origin.icao_code,city:route.origin.municipality||route.origin.name,lat:route.origin.latitude,lon:route.origin.longitude};
     f.dest={code:route.destination.iata_code||route.destination.icao_code,city:route.destination.municipality||route.destination.name,lat:route.destination.latitude,lon:route.destination.longitude};
@@ -438,13 +455,13 @@ function miniLogo(cs){
 /* =============== RENDER =============== */
 function buildHero(f){
   withDelta(f);
-  const al=airlineFor(f.callsign);
+  const al=f.airline||airlineFor(f.callsign);
   const tile=al
     ? `<div class="logo-tile" style="--tilebg:${al.c}22">
          <img src="https://www.gstatic.com/flights/airline_logos/70px/${al.i}.png" alt="${al.n}"
               onerror="this.outerHTML='<div class=fallback dot>${al.i}</div>'"></div>`
     : `<div class="logo-tile"><div class="fallback dot glow">✈</div></div>`;
-  const typeName=TYPES[f.type]||f.type||"Unknown type";
+  const typeName=TYPES[f.type]||f.type||"Type not broadcast";
   const routeProgress=f.orig&&f.dest
     ? Math.min(96,Math.max(4,Math.round(100*distMi(f.orig.lat,f.orig.lon,f.lat,f.lon)/distMi(f.orig.lat,f.orig.lon,f.dest.lat,f.dest.lon))))
     : 0;
@@ -641,6 +658,7 @@ async function tickData(){
   try{ list=await fetchFlights(); demoMode=false; setStatus("LIVE · ADS-B",false); }
   catch(e){ list=JSON.parse(JSON.stringify(DEMO)); list.forEach(f=>f.lastReal=Date.now()); demoMode=true; setStatus("DEMO MODE",true); }
 
+  await enrichAircraftDetails(list);
   list.forEach(withDelta);
   list.sort((a,b)=>a.dist-b.dist);
   flights=list;
@@ -651,7 +669,7 @@ async function tickData(){
   document.getElementById("highest").textContent=hi?Math.round(hi).toLocaleString():"--";
 
   if(!flights.length){ current=null; renderEmpty(); return; }
-  await getRoutes(flights.slice(0,12));
+  await getRoutes(flights);
 
   if(current){
     const idx=flights.findIndex(f=>f.hex===current.hex);
@@ -659,9 +677,11 @@ async function tickData(){
       currentIdx=idx;
       const fresh=flights[idx];
       const hadRoute=!!(current.orig&&current.dest);
+      const identityChanged=current.type!==fresh.type||current.callsign!==fresh.callsign||current.reg!==fresh.reg;
       Object.assign(current,{lat:fresh.lat,lon:fresh.lon,altFt:fresh.altFt,gsMph:fresh.gsMph,
-        track:fresh.track,vrFpm:fresh.vrFpm,orig:fresh.orig,dest:fresh.dest,lastReal:Date.now()});
-      if(!hadRoute && fresh.orig) buildHero(current);
+        track:fresh.track,vrFpm:fresh.vrFpm,callsign:fresh.callsign,reg:fresh.reg,type:fresh.type,airline:fresh.airline,
+        orig:fresh.orig,dest:fresh.dest,lastReal:Date.now()});
+      if((!hadRoute&&fresh.orig)||identityChanged) buildHero(current);
       else { updateTele(current); renderUpNext(); }
       const nEl=document.getElementById("rotIdx");
       if(nEl) nEl.textContent=`PLANE ${currentIdx+1} OF ${flights.length}`;
