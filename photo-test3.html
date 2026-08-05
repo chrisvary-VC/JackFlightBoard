@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<!-- Explicitly allow images from all sources we want to use -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  img-src * data: blob:;
+  script-src 'self' 'unsafe-inline';
+  style-src 'self' 'unsafe-inline';
+  connect-src *;
+  font-src *;
+">
+<title>Photo Test 3 — CSP Fix</title>
+<style>
+body{background:#111;color:#fff;font-family:monospace;padding:20px;font-size:14px}
+img{max-width:380px;max-height:200px;border:2px solid #444;display:block;margin:8px 0}
+.ok{color:#7f7} .fail{color:#f77} .pending{color:#fa0}
+.section{margin:14px 0;padding:14px;background:#1a1a1a;border-radius:8px}
+h3{margin:0 0 8px;font-size:14px}
+</style>
+</head>
+<body>
+<h2>Photo Test 3 — With CSP img-src *</h2>
+<p>If images load here, the fix is adding a CSP meta tag to the main board.</p>
+
+<div class="section">
+<h3>Test A: Wikipedia (Boeing 737-800 AA livery)</h3>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Boeing_737-800%2C_American_Airlines%2C_N822NN.jpg/640px-Boeing_737-800%2C_American_Airlines%2C_N822NN.jpg"
+  onload="ok('tA')" onerror="fail('tA')">
+<div id="tA" class="pending">loading...</div>
+</div>
+
+<div class="section">
+<h3>Test B: Planespotters fetch + wsrv.nl proxy (hex a0f0a5)</h3>
+<div id="tB" class="pending">fetching...</div>
+</div>
+
+<div class="section">
+<h3>Test C: airport-data.com thumbnail</h3>
+<img src="https://www.airport-data.com/images/aircraft/thumbnails/N822NN.jpg"
+  onload="ok('tC')" onerror="fail('tC')">
+<div id="tC" class="pending">loading...</div>
+</div>
+
+<div class="section">
+<h3>Test D: Planespotters fetch hex (DAL a15199)</h3>
+<div id="tD" class="pending">fetching...</div>
+</div>
+
+<script>
+function ok(id,extra){ const e=document.getElementById(id); e.className='ok'; e.textContent='✓ WORKS'+(extra?' — '+extra:''); }
+function fail(id,extra){ const e=document.getElementById(id); e.className='fail'; e.textContent='✗ FAILED'+(extra?' — '+extra:''); }
+
+function testFetch(id, hex){
+  fetch(`https://api.planespotters.net/pub/photos/hex/${hex}`)
+    .then(r=>r.json())
+    .then(d=>{
+      const p=d.photos?.[0];
+      const el=document.getElementById(id);
+      if(!p){ fail(id,'no photos for '+hex); return; }
+      const rawUrl=(p.thumbnail_large?.src||p.thumbnail?.src||'');
+      el.textContent='Got CDN URL. Loading via wsrv.nl...';
+      const stripped=rawUrl.replace(/^https?:\/\//,'');
+      const proxied=`https://wsrv.nl/?url=${encodeURIComponent(stripped)}&w=640`;
+      const img=new Image();
+      img.style.cssText='max-width:380px;max-height:200px;display:block;margin:8px 0;border:2px solid #444';
+      img.onload=()=>{ ok(id,'wsrv proxy worked!'); el.appendChild(img); }
+      img.onerror=()=>{
+        // Try raw CDN
+        const img2=new Image(); img2.style.cssText=img.style.cssText;
+        img2.onload=()=>{ ok(id,'raw CDN worked!'); el.appendChild(img2); }
+        img2.onerror=()=>{ fail(id,'wsrv + raw CDN both failed'); }
+        img2.src=rawUrl;
+      }
+      img.src=proxied;
+    })
+    .catch(e=>fail(id,'fetch error: '+e.message));
+}
+
+testFetch('tB','a0f0a5');
+testFetch('tD','a15199');
+</script>
+</body>
+</html>
