@@ -276,12 +276,27 @@ const toWind=b=>WINDS[Math.round(b/22.5)%16];
 let flights=[], current=null, currentIdx=0, demoMode=false, rotateStart=Date.now();
 const photoCache={};
 
+// Safari versions used by some smart displays do not implement
+// AbortSignal.timeout(). Use a standard AbortController instead so the live
+// feeds work consistently on the hosted page as well as locally.
+async function timedFetch(url, options={}, timeoutMs=8000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+    return await fetch(url,{...options,signal:controller.signal});
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
 /* =============== DATA =============== */
 async function fetchFlights(){
   const nm=Math.round(CONFIG.radiusMiles*0.868976);
-  const url=`https://api.adsb.lol/v2/point/${CONFIG.lat}/${CONFIG.lon}/${nm}`;
-  const res=await fetch(url,{signal:AbortSignal.timeout(8000)});
-  if(!res.ok) throw new Error("adsb.lol "+res.status);
+  // api.airplanes.live has the same OpenSky-style response shape as adsb.lol
+  // but includes the browser CORS header required by GitHub Pages.
+  const url=`https://api.airplanes.live/v2/point/${CONFIG.lat}/${CONFIG.lon}/${nm}`;
+  const res=await timedFetch(url,{},8000);
+  if(!res.ok) throw new Error("airplanes.live "+res.status);
   const data=await res.json();
   return (data.ac||[]).filter(a=>a.lat!=null&&a.lon!=null).map(a=>{
     const alt=(a.alt_baro==="ground")?0:(a.alt_baro??a.alt_geom??null);
@@ -304,10 +319,10 @@ const DEMO=[
 ];
 async function getRoutes(list){
   try{
-    const res=await fetch("https://api.adsb.lol/api/0/routeset",{
-      method:"POST",headers:{"Content-Type":"application/json"},signal:AbortSignal.timeout(6000),
+    const res=await timedFetch("https://api.adsb.lol/api/0/routeset",{
+      method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({planes:list.map(f=>({callsign:f.callsign,lat:f.lat,lng:f.lon}))})
-    });
+    },6000);
     if(!res.ok) return;
     const data=await res.json();
     for(const r of data){
@@ -340,9 +355,7 @@ async function getPhoto(hex, reg, type){
         gsrnamespace:"6",gsrlimit:"8",prop:"imageinfo",
         iiprop:"url|extmetadata",iiurlwidth:"900",format:"json",origin:"*"
       });
-      const res=await fetch(`https://commons.wikimedia.org/w/api.php?${params}`,{
-        signal:AbortSignal.timeout(7000)
-      });
+      const res=await timedFetch(`https://commons.wikimedia.org/w/api.php?${params}`,{},7000);
       if(res.ok){
         const data=await res.json();
         const reject=/sink|restroom|interior|cabin|cockpit|seat|window|meal|engine detail/i;
@@ -566,7 +579,7 @@ async function tickWind(){
       +'?latitude='+CONFIG.lat+'&longitude='+CONFIG.lon
       +'&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m'
       +'&wind_speed_unit=mph&timezone=America%2FChicago';
-    const res=await fetch(url,{signal:AbortSignal.timeout(8000)});
+    const res=await timedFetch(url,{},8000);
     if(!res.ok) throw new Error('weather '+res.status);
     const data=await res.json();
     const c=data.current;
