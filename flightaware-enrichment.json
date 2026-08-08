@@ -1,27 +1,27 @@
 {
-  "updatedAt": "2026-08-07T15:14:57.779Z",
+  "updatedAt": "2026-08-08T04:32:32.187Z",
   "source": "FlightAware AeroAPI cache — refreshed every 12 hours by GitHub Actions",
   "flights": {
-    "N7017R": {
-      "cachedAt": "2026-08-07T15:14:57.126Z",
-      "flightId": "N7017R-1786112935-sw-3534p",
-      "aircraftType": "P28A",
+    "UAL2775": {
+      "cachedAt": "2026-08-08T04:32:31.733Z",
+      "flightId": "UAL2775-1785893486-fa-32p",
+      "aircraftType": "B39M",
       "origin": null,
       "destination": null,
-      "status": "En Route"
+      "status": "En Route / Delayed"
     },
-    "SWA941": {
-      "cachedAt": "2026-08-07T15:14:57.488Z",
-      "flightId": "SWA941-1785910889-airline-377p",
-      "aircraftType": "B38M",
+    "AFR179": {
+      "cachedAt": "2026-08-08T04:32:31.987Z",
+      "flightId": "AFR179-1785907901-airline-677p",
+      "aircraftType": "A359",
       "origin": null,
       "destination": null,
-      "status": "En Route / On Time"
+      "status": "En Route / Delayed"
     },
-    "N5378D": {
-      "cachedAt": "2026-08-07T15:14:57.779Z",
-      "flightId": "N5378D-1786111996-sw-13p",
-      "aircraftType": "C172",
+    "N84AR": {
+      "cachedAt": "2026-08-08T04:32:32.187Z",
+      "flightId": "N84AR-1786158070-sw-6053p",
+      "aircraftType": "P28R",
       "origin": null,
       "destination": null,
       "status": "En Route"
