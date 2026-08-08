@@ -1,27 +1,51 @@
 {
-  "updatedAt": "2026-08-08T04:32:32.187Z",
+  "updatedAt": "2026-08-08T14:16:56.187Z",
   "source": "FlightAware AeroAPI cache — refreshed every 12 hours by GitHub Actions",
   "flights": {
-    "UAL2775": {
-      "cachedAt": "2026-08-08T04:32:31.733Z",
-      "flightId": "UAL2775-1785893486-fa-32p",
-      "aircraftType": "B39M",
+    "N993MM": {
+      "cachedAt": "2026-08-08T14:16:54.220Z",
+      "flightId": "N993MM-1786189431-sw-1096p",
+      "aircraftType": "SR22",
       "origin": null,
       "destination": null,
-      "status": "En Route / Delayed"
+      "status": "En Route"
     },
-    "AFR179": {
-      "cachedAt": "2026-08-08T04:32:31.987Z",
-      "flightId": "AFR179-1785907901-airline-677p",
-      "aircraftType": "A359",
+    "AMX411": {
+      "cachedAt": "2026-08-08T14:16:54.783Z",
+      "flightId": "AMX411-1786001159-airline-16p",
+      "aircraftType": "B38M",
       "origin": null,
       "destination": null,
-      "status": "En Route / Delayed"
+      "status": "En Route / On Time"
     },
-    "N84AR": {
-      "cachedAt": "2026-08-08T04:32:32.187Z",
-      "flightId": "N84AR-1786158070-sw-6053p",
-      "aircraftType": "P28R",
+    "LTA925": {
+      "cachedAt": "2026-08-08T14:16:55.077Z",
+      "flightId": "LTA925-1786191152-adhoc-1325p",
+      "aircraftType": "DA40",
+      "origin": null,
+      "destination": null,
+      "status": "En Route"
+    },
+    "DAL1411": {
+      "cachedAt": "2026-08-08T14:16:55.486Z",
+      "flightId": "DAL1411-1785989288-fa-2723p",
+      "aircraftType": "B739",
+      "origin": null,
+      "destination": null,
+      "status": "En Route / On Time"
+    },
+    "LXJ265": {
+      "cachedAt": "2026-08-08T14:16:55.976Z",
+      "flightId": "LXJ265-1786183092-sw-361p",
+      "aircraftType": "E545",
+      "origin": null,
+      "destination": null,
+      "status": "En Route"
+    },
+    "N472D": {
+      "cachedAt": "2026-08-08T14:16:56.187Z",
+      "flightId": "N472D-1786196987-adhoc-2763p",
+      "aircraftType": "C172",
       "origin": null,
       "destination": null,
       "status": "En Route"
