@@ -1,54 +1,5 @@
 {
-  "updatedAt": "2026-08-08T14:16:56.187Z",
+  "updatedAt": "2026-08-09T04:48:54.390Z",
   "source": "FlightAware AeroAPI cache — refreshed every 12 hours by GitHub Actions",
-  "flights": {
-    "N993MM": {
-      "cachedAt": "2026-08-08T14:16:54.220Z",
-      "flightId": "N993MM-1786189431-sw-1096p",
-      "aircraftType": "SR22",
-      "origin": null,
-      "destination": null,
-      "status": "En Route"
-    },
-    "AMX411": {
-      "cachedAt": "2026-08-08T14:16:54.783Z",
-      "flightId": "AMX411-1786001159-airline-16p",
-      "aircraftType": "B38M",
-      "origin": null,
-      "destination": null,
-      "status": "En Route / On Time"
-    },
-    "LTA925": {
-      "cachedAt": "2026-08-08T14:16:55.077Z",
-      "flightId": "LTA925-1786191152-adhoc-1325p",
-      "aircraftType": "DA40",
-      "origin": null,
-      "destination": null,
-      "status": "En Route"
-    },
-    "DAL1411": {
-      "cachedAt": "2026-08-08T14:16:55.486Z",
-      "flightId": "DAL1411-1785989288-fa-2723p",
-      "aircraftType": "B739",
-      "origin": null,
-      "destination": null,
-      "status": "En Route / On Time"
-    },
-    "LXJ265": {
-      "cachedAt": "2026-08-08T14:16:55.976Z",
-      "flightId": "LXJ265-1786183092-sw-361p",
-      "aircraftType": "E545",
-      "origin": null,
-      "destination": null,
-      "status": "En Route"
-    },
-    "N472D": {
-      "cachedAt": "2026-08-08T14:16:56.187Z",
-      "flightId": "N472D-1786196987-adhoc-2763p",
-      "aircraftType": "C172",
-      "origin": null,
-      "destination": null,
-      "status": "En Route"
-    }
-  }
+  "flights": {}
 }
