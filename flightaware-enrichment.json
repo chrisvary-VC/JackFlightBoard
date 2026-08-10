@@ -1,30 +1,5 @@
 {
-  "updatedAt": "2026-08-09T14:19:45.978Z",
+  "updatedAt": "2026-08-10T05:11:57.982Z",
   "source": "FlightAware AeroAPI cache — refreshed every 12 hours by GitHub Actions",
-  "flights": {
-    "N9094Q": {
-      "cachedAt": "2026-08-09T14:19:44.972Z",
-      "flightId": "N9094Q-1786277610-sw-1114p",
-      "aircraftType": "BE58",
-      "origin": null,
-      "destination": null,
-      "status": "En Route"
-    },
-    "N416MP": {
-      "cachedAt": "2026-08-09T14:19:45.352Z",
-      "flightId": "N416MP-1786269633-sw-112p",
-      "aircraftType": "P32R",
-      "origin": null,
-      "destination": null,
-      "status": "En Route"
-    },
-    "N990VT": {
-      "cachedAt": "2026-08-09T14:19:45.978Z",
-      "flightId": "N990VT-1786281930-adhoc-657p",
-      "aircraftType": "P28A",
-      "origin": null,
-      "destination": null,
-      "status": "En Route"
-    }
-  }
+  "flights": {}
 }
