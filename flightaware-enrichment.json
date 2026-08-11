@@ -1,5 +1,46 @@
 {
-  "updatedAt": "2026-08-11T04:52:25.954Z",
+  "updatedAt": "2026-08-11T15:34:05.745Z",
   "source": "FlightAware AeroAPI cache — refreshed every 12 hours by GitHub Actions",
-  "flights": {}
+  "flights": {
+    "AAL3297": {
+      "cachedAt": "2026-08-11T15:34:04.258Z",
+      "flightId": "AAL3297-1786260264-airline-1279p",
+      "aircraftType": "A320",
+      "origin": null,
+      "destination": null,
+      "status": "En Route / On Time"
+    },
+    "N864RJ": {
+      "cachedAt": "2026-08-11T15:34:04.486Z",
+      "flightId": "N864RJ-1786452920-sw-412p",
+      "aircraftType": "PC12",
+      "origin": null,
+      "destination": null,
+      "status": "En Route"
+    },
+    "DAL3199": {
+      "cachedAt": "2026-08-11T15:34:04.948Z",
+      "flightId": "DAL3199-1786248570-fa-956p",
+      "aircraftType": "B712",
+      "origin": null,
+      "destination": null,
+      "status": "En Route / On Time"
+    },
+    "LTA906": {
+      "cachedAt": "2026-08-11T15:34:05.225Z",
+      "flightId": "LTA906-1786462343-adhoc-837p",
+      "aircraftType": "DA40",
+      "origin": null,
+      "destination": null,
+      "status": "En Route"
+    },
+    "SWA854": {
+      "cachedAt": "2026-08-11T15:34:05.745Z",
+      "flightId": "SWA854-1786264561-airline-395p",
+      "aircraftType": "B738",
+      "origin": null,
+      "destination": null,
+      "status": "En Route / On Time"
+    }
+  }
 }
