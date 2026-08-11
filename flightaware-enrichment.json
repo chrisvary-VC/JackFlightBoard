@@ -1,54 +1,5 @@
 {
-  "updatedAt": "2026-08-10T15:36:27.564Z",
+  "updatedAt": "2026-08-11T04:52:25.954Z",
   "source": "FlightAware AeroAPI cache — refreshed every 12 hours by GitHub Actions",
-  "flights": {
-    "SWA3400": {
-      "cachedAt": "2026-08-10T15:36:25.612Z",
-      "flightId": "SWA3400-1786169721-airline-135p",
-      "aircraftType": "B737",
-      "origin": null,
-      "destination": null,
-      "status": "En Route / On Time"
-    },
-    "N516JR": {
-      "cachedAt": "2026-08-10T15:36:25.838Z",
-      "flightId": "N516JR-1786374292-sw-2340p",
-      "aircraftType": "SF50",
-      "origin": null,
-      "destination": null,
-      "status": "En Route"
-    },
-    "N7017R": {
-      "cachedAt": "2026-08-10T15:36:26.157Z",
-      "flightId": "N7017R-1786375337-adhoc-222p",
-      "aircraftType": "P28A",
-      "origin": null,
-      "destination": null,
-      "status": "En Route"
-    },
-    "N4B": {
-      "cachedAt": "2026-08-10T15:36:26.692Z",
-      "flightId": "N4B-1786314940-sw-692p",
-      "aircraftType": "E55P",
-      "origin": null,
-      "destination": null,
-      "status": "En Route"
-    },
-    "AAL3297": {
-      "cachedAt": "2026-08-10T15:36:27.022Z",
-      "flightId": "AAL3297-1786172776-airline-1488p",
-      "aircraftType": "A320",
-      "origin": null,
-      "destination": null,
-      "status": "En Route / On Time"
-    },
-    "N276HD": {
-      "cachedAt": "2026-08-10T15:36:27.564Z",
-      "flightId": "N276HD-1786374547-sw-213p",
-      "aircraftType": "PC12",
-      "origin": null,
-      "destination": null,
-      "status": "En Route"
-    }
-  }
+  "flights": {}
 }
