@@ -1,11 +1,35 @@
 {
-  "updatedAt": "2026-08-12T05:50:04.488Z",
+  "updatedAt": "2026-08-12T15:34:12.040Z",
   "source": "FlightAware AeroAPI cache — refreshed every 12 hours by GitHub Actions",
   "flights": {
-    "LBQ782": {
-      "cachedAt": "2026-08-12T05:50:04.487Z",
-      "flightId": "LBQ782-1786509011-sw-1694p",
-      "aircraftType": "PC12",
+    "N23556": {
+      "cachedAt": "2026-08-12T15:34:10.436Z",
+      "flightId": "N23556-1786541405-sw-2016p",
+      "aircraftType": "C172",
+      "origin": null,
+      "destination": null,
+      "status": "En Route"
+    },
+    "UAL1238": {
+      "cachedAt": "2026-08-12T15:34:11.170Z",
+      "flightId": "UAL1238-1786320299-fa-205p",
+      "aircraftType": "B739",
+      "origin": null,
+      "destination": null,
+      "status": "En Route / On Time"
+    },
+    "VIV100": {
+      "cachedAt": "2026-08-12T15:34:11.605Z",
+      "flightId": "VIV100-1786352456-airline-5242p",
+      "aircraftType": "A320",
+      "origin": null,
+      "destination": null,
+      "status": "En Route / On Time"
+    },
+    "N9XJ": {
+      "cachedAt": "2026-08-12T15:34:12.040Z",
+      "flightId": "N9XJ-1786507251-sw-650p",
+      "aircraftType": "C82R",
       "origin": null,
       "destination": null,
       "status": "En Route"
